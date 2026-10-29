@@ -61,11 +61,15 @@ class mod_securevideo_mod_form extends moodleform_mod {
         $mform->addElement('header', 'videoselectionheader', get_string('videoselection', 'mod_securevideo'));
 
         // Hidden input storing selected media ID.
-        $mform->addElement('hidden', 'mediaid', 0);
+        $mform->addElement('hidden', 'mediaid', 0, ['id' => 'id_mediaid']);
         $mform->setType('mediaid', PARAM_INT);
 
         // Preview container rendering the selected video card or unselected placeholder.
         $currentmediaid = $this->current->mediaid ?? 0;
+        if (empty($currentmediaid) && $this->_form->isSubmitted()) {
+            $submitted = $this->_form->getSubmitValues();
+            $currentmediaid = (int)($submitted['mediaid'] ?? 0);
+        }
         $selectedmedia = null;
         if (!empty($currentmediaid)) {
             $selectedmedia = $DB->get_record('local_securevideolibrary_media', ['id' => $currentmediaid]);
@@ -151,7 +155,7 @@ class mod_securevideo_mod_form extends moodleform_mod {
             'courseid' => (int)$course->id,
         ]]);
 
-        echo $OUTPUT->render_from_template('mod_securevideo/picker_modal', $modaldata);
+        $mform->addElement('html', $OUTPUT->render_from_template('mod_securevideo/picker_modal', $modaldata));
     }
 
     /**

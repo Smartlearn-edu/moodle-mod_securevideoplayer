@@ -111,17 +111,53 @@ define(['core/ajax', 'core/notification', 'core/templates'], function(Ajax, Noti
      * @param {Object} video Selected video data.
      */
     function applySelectedVideo(video) {
-        const mediaIdInput = document.getElementById('id_mediaid');
-        const nameInput = document.getElementById('id_name');
+        let mediaIdInput = document.getElementById('id_mediaid');
+        if (!mediaIdInput) {
+            mediaIdInput = document.querySelector('input[name="mediaid"]');
+        }
+        if (!mediaIdInput) {
+            const form = document.querySelector('form.mform');
+            if (form) {
+                mediaIdInput = form.querySelector('input[name="mediaid"]');
+            }
+        }
+
+        const nameInput = document.getElementById('id_name') ||
+                          document.querySelector('input[name="name"]');
         const previewEl = document.getElementById('securevideo_selected_preview');
 
         if (mediaIdInput) {
-            mediaIdInput.value = video.id;
+            mediaIdInput.value = String(video.id);
+            try {
+                mediaIdInput.dispatchEvent(new Event('change', { bubbles: true }));
+                mediaIdInput.dispatchEvent(new Event('input', { bubbles: true }));
+            } catch (e) {
+                // Ignore.
+            }
+        } else {
+            console.error('[SecureVideo] mediaid input element not found in form.');
         }
 
         // Auto-fill activity name if empty.
         if (nameInput && !nameInput.value.trim()) {
             nameInput.value = video.title;
+        }
+
+        // Clear any validation error message displayed under videopreview.
+        const errorElements = document.querySelectorAll(
+            '#id_error_videopreview, [data-field="videopreview"] .invalid-feedback, ' +
+            '#securevideo_selected_preview + .text-danger, #securevideo_selected_preview + .error'
+        );
+        errorElements.forEach(function(el) {
+            el.remove();
+        });
+        const parentFormGroup = previewEl ? previewEl.closest('.form-group, .fitem') : null;
+        if (parentFormGroup) {
+            parentFormGroup.classList.remove('has-danger', 'error');
+            const errSpan = parentFormGroup.querySelector('.text-danger, .error, .invalid-feedback');
+            if (errSpan) {
+                errSpan.remove();
+            }
         }
 
         if (previewEl) {
