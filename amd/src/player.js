@@ -828,7 +828,10 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             submitBtn.disabled = true;
 
             overlay.classList.remove('d-none');
-            overlay.classList.add('d-flex');
+            const bodyEl = overlay.querySelector('.securevideo-q-body');
+            if (bodyEl) {
+                bodyEl.scrollTop = 0;
+            }
 
             Ajax.call([{
                 methodname: 'mod_securevideo_get_question_attempt',
@@ -842,6 +845,20 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
                 contentEl.innerHTML = res.html;
                 contentEl.classList.remove('d-none');
                 submitBtn.disabled = false;
+
+                if (bodyEl) {
+                    bodyEl.scrollTop = 0;
+                }
+
+                // Option row click selects its radio input.
+                contentEl.querySelectorAll('.answer .r0, .answer .r1').forEach(function(row) {
+                    row.addEventListener('click', function(e) {
+                        const radio = row.querySelector('input[type="radio"]');
+                        if (radio && e.target !== radio && !radio.disabled) {
+                            radio.checked = true;
+                        }
+                    });
+                });
 
                 // Render MathJax if available.
                 if (window.MathJax && window.MathJax.typesetPromise) {
