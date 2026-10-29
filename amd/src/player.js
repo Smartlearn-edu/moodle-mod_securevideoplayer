@@ -850,6 +850,19 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
                     bodyEl.scrollTop = 0;
                 }
 
+                if (res.passed) {
+                    submitBtn.classList.add('d-none');
+                    continueBtn.classList.remove('d-none');
+                    retryBtn.classList.remove('d-none');
+                    retryBtn.innerHTML = '<i class="fa fa-rotate-left me-1" aria-hidden="true"></i>Retake Question';
+                    continueBtn.focus();
+                } else {
+                    submitBtn.classList.remove('d-none');
+                    submitBtn.disabled = false;
+                    continueBtn.classList.add('d-none');
+                    retryBtn.classList.add('d-none');
+                }
+
                 // Option row click selects its radio input.
                 contentEl.querySelectorAll('.answer .r0, .answer .r1').forEach(function(row) {
                     row.addEventListener('click', function(e) {

@@ -65,6 +65,22 @@ $PAGE->set_heading($course->fullname);
 $PAGE->set_context($context);
 $PAGE->set_activity_record($securevideo);
 
+$canmanage = has_capability('moodle/course:manageactivities', $context)
+    || has_capability('mod/securevideo:addinstance', $context);
+
+// Allow teachers/admins to reset their own attempts for testing.
+if ($canmanage && optional_param('resetmyattempts', 0, PARAM_INT) && confirm_sesskey()) {
+    $DB->delete_records('securevideo_qattempts', [
+        'instanceid' => $securevideo->id,
+        'userid'     => $USER->id,
+    ]);
+    $DB->delete_records('securevideo_progress', [
+        'instanceid' => $securevideo->id,
+        'userid'     => $USER->id,
+    ]);
+    redirect(new moodle_url('/mod/securevideo/view.php', ['id' => $cm->id]));
+}
+
 // Fetch linked media record from central library.
 $media = null;
 if (!empty($securevideo->mediaid)) {
@@ -183,6 +199,12 @@ if (!$media || $media->status !== 'ready') {
         'questions'            => $questionsdata,
         'hasquestions'         => !empty($questionsdata),
         'questionsjson'        => s(json_encode($questionsdata)),
+        'canmanage'            => $canmanage,
+        'resetattemptsurl'     => (new moodle_url('/mod/securevideo/view.php', [
+            'id'              => $cm->id,
+            'resetmyattempts' => 1,
+            'sesskey'         => sesskey(),
+        ]))->out(false),
     ];
 
     echo $OUTPUT->render_from_template('mod_securevideo/player', $playerdata);

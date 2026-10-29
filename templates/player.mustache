@@ -212,13 +212,20 @@
 
     {{! Watch progress bar & completion indicator }}
     <div class="d-flex justify-content-between align-items-center mt-2 px-1">
-        <div class="small text-muted">
-            {{#hascompletionrule}}
-            {{#str}}watchprogress, mod_securevideo, { "percent": {{percentcompleted}}, "min": {{completionminpercent}} }{{/str}}
-            {{/hascompletionrule}}
-            {{^hascompletionrule}}
-            {{#str}}watchprogress_no_min, mod_securevideo, {{percentcompleted}}{{/str}}
-            {{/hascompletionrule}}
+        <div class="small text-muted d-flex align-items-center gap-2">
+            <span>
+                {{#hascompletionrule}}
+                {{#str}}watchprogress, mod_securevideo, { "percent": {{percentcompleted}}, "min": {{completionminpercent}} }{{/str}}
+                {{/hascompletionrule}}
+                {{^hascompletionrule}}
+                {{#str}}watchprogress_no_min, mod_securevideo, {{percentcompleted}}{{/str}}
+                {{/hascompletionrule}}
+            </span>
+            {{#canmanage}}
+            <a href="{{resetattemptsurl}}" class="btn btn-sm btn-outline-secondary py-0 px-2" title="{{#str}}resetmyattempts_desc, mod_securevideo{{/str}}">
+                <i class="fa fa-refresh me-1" aria-hidden="true"></i>{{#str}}resetmyattempts, mod_securevideo{{/str}}
+            </a>
+            {{/canmanage}}
         </div>
         <div class="progress" style="width: 200px; height: 8px;">
             <div class="progress-bar bg-success"
