@@ -105,22 +105,23 @@ if (!$media || $media->status !== 'ready') {
     $secs = $media->duration % 60;
     $durationformatted = sprintf('%02d:%02d', $mins, $secs);
 
-    $lastposition = $progress ? (int)$progress->lastposition : 0;
-    $lastposmins = floor($lastposition / 60);
-    $lastpossecs = $lastposition % 60;
-    $lastposformatted = sprintf('%02d:%02d', $lastposmins, $lastpossecs);
-
     $percentcompleted = $progress ? (int)$progress->percentcompleted : 0;
 
     // Fetch configured interactive questions.
     $questions = $DB->get_records('securevideo_questions', ['instanceid' => $securevideo->id], 'timecode ASC');
     $questionsdata = [];
+    $firstunpassedtime = null;
+
     foreach ($questions as $q) {
         $passed = $DB->record_exists('securevideo_qattempts', [
             'svquestionid' => $q->id,
             'userid'       => $USER->id,
             'passed'       => 1,
         ]);
+
+        if (!empty($q->requirecorrect) && !$passed && $firstunpassedtime === null) {
+            $firstunpassedtime = (int)$q->timecode;
+        }
 
         $qm = floor($q->timecode / 60);
         $qs = $q->timecode % 60;
@@ -139,6 +140,23 @@ if (!$media || $media->status !== 'ready') {
         ];
     }
 
+    $lastposition = $progress ? (int)$progress->lastposition : 0;
+    $maxposition  = $progress ? (int)$progress->maxposition : 0;
+
+    // If an unpassed required question sits before the student's saved bookmark, cap the bookmark.
+    if ($firstunpassedtime !== null) {
+        if ($lastposition > $firstunpassedtime) {
+            $lastposition = $firstunpassedtime;
+        }
+        if ($maxposition > $firstunpassedtime) {
+            $maxposition = $firstunpassedtime;
+        }
+    }
+
+    $lastposmins = floor($lastposition / 60);
+    $lastpossecs = $lastposition % 60;
+    $lastposformatted = sprintf('%02d:%02d', $lastposmins, $lastpossecs);
+
     $playerdata = [
         'cmid'                 => (int)$cm->id,
         'title'                => $securevideo->name,
@@ -149,9 +167,9 @@ if (!$media || $media->status !== 'ready') {
         'hasresume'            => ($lastposition > 15 && $lastposition < ($media->duration - 15)),
         'lastposition'         => $lastposition,
         'lastposformatted'     => $lastposformatted,
-        'maxposition'          => $progress ? (int)$progress->maxposition : 0,
+        'maxposition'          => $maxposition,
         'watchedseconds'       => $progress ? (int)$progress->watchedseconds : 0,
-        'watchedintervals'     => $progress ? $progress->watchedintervals : '[]',
+        'watchedintervals'     => s($progress ? $progress->watchedintervals : '[]'),
         'percentcompleted'     => $percentcompleted,
         'completionminpercent' => (int)$securevideo->completionminpercent,
         'hascompletionrule'    => (!empty($securevideo->completionminpercent)),

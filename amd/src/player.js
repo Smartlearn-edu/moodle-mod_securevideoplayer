@@ -150,17 +150,40 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
         this.studentIp = container.dataset.studentip || '';
         this.liveTime = container.dataset.livetime || '';
 
+        let rawIntervals = container.dataset.watchedintervals || '[]';
         try {
-            this.watchedIntervals = JSON.parse(container.dataset.watchedintervals || '[]');
+            if (rawIntervals.indexOf('&quot;') !== -1 || rawIntervals.indexOf('&amp;') !== -1) {
+                const txt = document.createElement('textarea');
+                txt.innerHTML = rawIntervals;
+                rawIntervals = txt.value;
+            }
+            this.watchedIntervals = JSON.parse(rawIntervals);
+            if (!Array.isArray(this.watchedIntervals)) {
+                this.watchedIntervals = [];
+            }
         } catch (e) {
             this.watchedIntervals = [];
         }
 
+        let rawQuestions = container.dataset.questions || '[]';
         try {
-            this.questions = JSON.parse(container.dataset.questions || '[]');
+            if (rawQuestions.indexOf('&quot;') !== -1 || rawQuestions.indexOf('&amp;') !== -1) {
+                const txt = document.createElement('textarea');
+                txt.innerHTML = rawQuestions;
+                rawQuestions = txt.value;
+            }
+            this.questions = JSON.parse(rawQuestions);
+            if (!Array.isArray(this.questions)) {
+                this.questions = [];
+            }
         } catch (e) {
+            console.error('[SecureVideo] Failed to parse questions JSON:', e, rawQuestions);
             this.questions = [];
         }
+
+        this.questions.sort(function(a, b) {
+            return (a.timecode || 0) - (b.timecode || 0);
+        });
 
         this.video = container.querySelector('#secureVideoElement');
         this.canvas = container.querySelector('#secureVideoWatermarkCanvas');
@@ -328,9 +351,9 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
 
                 // Check gate: First unpassed required question.
                 const unpassedQ = self.findFirstUnpassedQuestion(targetTime);
-                if (unpassedQ && targetTime > (unpassedQ.timecode + 1)) {
+                if (unpassedQ && targetTime > unpassedQ.timecode) {
                     video.currentTime = unpassedQ.timecode;
-                    self.triggerQuestion(unpassedQ);
+                    self.triggerQuestion(unpassedQ, false);
                     return;
                 }
 
@@ -352,6 +375,19 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             if (timelineWrapper) {
                 timelineWrapper.addEventListener('click', handleTimelineSeek);
             }
+
+            // Seeking guard against native or script seek bypasses.
+            video.addEventListener('seeking', function() {
+                if (self.activeQuestion) {
+                    return;
+                }
+                const cur = video.currentTime;
+                const unpassedQ = self.findFirstUnpassedQuestion(cur);
+                if (unpassedQ && cur > unpassedQ.timecode) {
+                    video.currentTime = unpassedQ.timecode;
+                    self.triggerQuestion(unpassedQ, false);
+                }
+            });
 
             // Timeupdate listener.
             video.addEventListener('timeupdate', function() {
@@ -453,7 +489,12 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
 
                 if (resumeBtn) {
                     resumeBtn.addEventListener('click', function() {
-                        video.currentTime = self.lastPosition;
+                        let resumeTarget = self.lastPosition;
+                        const unpassedQ = self.findFirstUnpassedQuestion(resumeTarget);
+                        if (unpassedQ && resumeTarget > unpassedQ.timecode) {
+                            resumeTarget = unpassedQ.timecode;
+                        }
+                        video.currentTime = resumeTarget;
                         resumeToast.remove();
                         video.play();
                     });
@@ -671,10 +712,31 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
                     }
                 });
             }
+
+            // Timeline cue marker clicks.
+            this.container.querySelectorAll('.securevideo-cue-marker').forEach(function(marker) {
+                marker.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const cueId = parseInt(marker.dataset.cueid, 10);
+                    const q = self.questions.find(function(item) {
+                        return item.id === cueId;
+                    });
+                    if (q) {
+                        const unpassedQ = self.findFirstUnpassedQuestion(q.timecode);
+                        if (unpassedQ && unpassedQ.id !== q.id) {
+                            self.video.currentTime = unpassedQ.timecode;
+                            self.triggerQuestion(unpassedQ, false);
+                            return;
+                        }
+                        self.video.currentTime = q.timecode;
+                        self.triggerQuestion(q, false);
+                    }
+                });
+            });
         },
 
         /**
-         * Find the first unpassed question before or at target timestamp.
+         * Find the first unpassed required question before or at target timestamp.
          *
          * @param {number} targetTime
          * @return {Object|null}
@@ -682,7 +744,8 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
         findFirstUnpassedQuestion: function(targetTime) {
             for (let i = 0; i < this.questions.length; i++) {
                 const q = this.questions[i];
-                if (q.requirecorrect && !q.passed && targetTime > (q.timecode + 1)) {
+                const isRequired = (q.requirecorrect === 1 || q.requirecorrect === true || q.requirecorrect === '1');
+                if (isRequired && !q.passed && targetTime >= q.timecode) {
                     return q;
                 }
             }
@@ -701,10 +764,25 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
 
             for (let i = 0; i < this.questions.length; i++) {
                 const q = this.questions[i];
-                if (!q.passed && currentTime >= q.timecode && (currentTime - q.timecode) < 2.5) {
-                    this.video.pause();
-                    this.triggerQuestion(q, false);
-                    break;
+                if (!q.passed) {
+                    const isRequired = (q.requirecorrect === 1 || q.requirecorrect === true || q.requirecorrect === '1');
+                    if (isRequired) {
+                        // If required and not passed, playback CANNOT advance past q.timecode.
+                        if (currentTime >= q.timecode) {
+                            this.video.pause();
+                            this.video.currentTime = q.timecode;
+                            this.triggerQuestion(q, false);
+                            break;
+                        }
+                    } else {
+                        // Informational question: trigger when crossing timecode.
+                        if (currentTime >= q.timecode && (currentTime - q.timecode) < 2.5 && !q.triggered) {
+                            q.triggered = true;
+                            this.video.pause();
+                            this.triggerQuestion(q, false);
+                            break;
+                        }
+                    }
                 }
             }
         },
@@ -863,9 +941,14 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
                             self.video.currentTime = Math.max(0, q.timecode - res.rewind_seconds);
                             self.video.play();
                         }, 2500);
-                    } else {
+                    } else if (q.requirecorrect) {
                         retryBtn.classList.remove('d-none');
                         retryBtn.focus();
+                    } else {
+                        // Informational: allow student to retry or continue.
+                        retryBtn.classList.remove('d-none');
+                        continueBtn.classList.remove('d-none');
+                        continueBtn.focus();
                     }
                 }
             }).catch(function(err) {
