@@ -45,7 +45,14 @@ $context = context_module::instance($cm->id);
 require_capability('mod/securevideo:view', $context);
 
 // Trigger course_module_viewed event.
-\mod_securevideo\event\course_module_viewed::create_from_cm($cm)->trigger();
+$event = \mod_securevideo\event\course_module_viewed::create([
+    'context'  => $context,
+    'objectid' => $securevideo->id,
+]);
+$event->add_record_snapshot('course_modules', $cm);
+$event->add_record_snapshot('course', $course);
+$event->add_record_snapshot('securevideo', $securevideo);
+$event->trigger();
 
 // Completion view tracking.
 $completion = new \completion_info($course);

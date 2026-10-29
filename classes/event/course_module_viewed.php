@@ -43,4 +43,20 @@ class course_module_viewed extends \core\event\course_module_viewed {
     public static function get_objectid_mapping(): array {
         return ['db' => 'securevideo', 'restore' => 'securevideo'];
     }
+
+    /**
+     * Create event instance from course module.
+     *
+     * @param \cm_info|\stdClass $cm The course module.
+     * @return static
+     */
+    public static function create_from_cm($cm): static {
+        $context = \context_module::instance($cm->id);
+        $event = static::create([
+            'context'  => $context,
+            'objectid' => (int)$cm->instance,
+        ]);
+        $event->add_record_snapshot('course_modules', $cm);
+        return $event;
+    }
 }
