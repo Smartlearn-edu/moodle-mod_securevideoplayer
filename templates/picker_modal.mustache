@@ -15,7 +15,7 @@
     along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 }}
 {{!
-    @template mod_securevideoplayer/picker_modal
+    @template mod_securevideo/picker_modal
 
     Modal for selecting videos from the central secure video library.
 }}
@@ -24,7 +24,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="secureVideoPickerModalLabel">
-                    <i class="fa fa-film me-2" aria-hidden="true"></i>{{#str}}selectfromlibrary, mod_securevideoplayer{{/str}}
+                    <i class="fa fa-film me-2" aria-hidden="true"></i>{{#str}}selectfromlibrary, mod_securevideo{{/str}}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -34,19 +34,19 @@
                     <ul class="nav nav-pills securevideo-picker-tabs">
                         <li class="nav-item">
                             <button type="button" class="nav-link active" data-scope="my">
-                                {{#str}}scope_my, mod_securevideoplayer{{/str}}
+                                {{#str}}scope_my, mod_securevideo{{/str}}
                             </button>
                         </li>
                         {{#hascourse}}
                         <li class="nav-item">
                             <button type="button" class="nav-link" data-scope="course">
-                                {{#str}}scope_course, mod_securevideoplayer{{/str}}
+                                {{#str}}scope_course, mod_securevideo{{/str}}
                             </button>
                         </li>
                         {{/hascourse}}
                         <li class="nav-item">
                             <button type="button" class="nav-link" data-scope="all">
-                                {{#str}}scope_all, mod_securevideoplayer{{/str}}
+                                {{#str}}scope_all, mod_securevideo{{/str}}
                             </button>
                         </li>
                     </ul>
@@ -54,15 +54,15 @@
                     <div class="d-flex align-items-center gap-2">
                         <div class="input-group">
                             <span class="input-group-text"><i class="fa fa-search" aria-hidden="true"></i></span>
-                            <input type="text" class="form-control securevideo-picker-search" placeholder="{{#str}}searchvideos, mod_securevideoplayer{{/str}}">
+                            <input type="text" class="form-control securevideo-picker-search" placeholder="{{#str}}searchvideos, mod_securevideo{{/str}}">
                         </div>
 
-                        <button type="button" class="btn btn-outline-secondary securevideo-picker-refresh" title="{{#str}}refreshlist, mod_securevideoplayer{{/str}}">
+                        <button type="button" class="btn btn-outline-secondary securevideo-picker-refresh" title="{{#str}}refreshlist, mod_securevideo{{/str}}">
                             <i class="fa fa-refresh" aria-hidden="true"></i>
                         </button>
 
                         <a href="{{uploadurl}}" target="_blank" class="btn btn-outline-primary" rel="noopener noreferrer">
-                            <i class="fa fa-cloud-upload me-1" aria-hidden="true"></i>{{#str}}uploadnewvideo, mod_securevideoplayer{{/str}}
+                            <i class="fa fa-cloud-upload me-1" aria-hidden="true"></i>{{#str}}uploadnewvideo, mod_securevideo{{/str}}
                         </a>
                     </div>
                 </div>
@@ -70,9 +70,9 @@
                 {{! Loading Spinner }}
                 <div class="securevideo-picker-loading text-center py-5 d-none">
                     <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">{{#str}}loadingvideos, mod_securevideoplayer{{/str}}</span>
+                        <span class="visually-hidden">{{#str}}loadingvideos, mod_securevideo{{/str}}</span>
                     </div>
-                    <p class="mt-2 text-muted">{{#str}}loadingvideos, mod_securevideoplayer{{/str}}</p>
+                    <p class="mt-2 text-muted">{{#str}}loadingvideos, mod_securevideo{{/str}}</p>
                 </div>
 
                 {{! Video Cards Grid }}
@@ -82,7 +82,7 @@
                 {{! Empty State }}
                 <div class="securevideo-picker-empty text-center py-5 d-none">
                     <i class="fa fa-video-camera fa-3x text-muted mb-2" aria-hidden="true"></i>
-                    <p class="text-muted mb-0">{{#str}}novideoselected, mod_securevideoplayer{{/str}}</p>
+                    <p class="text-muted mb-0">{{#str}}novideoselected, mod_securevideo{{/str}}</p>
                 </div>
             </div>
             <div class="modal-footer">

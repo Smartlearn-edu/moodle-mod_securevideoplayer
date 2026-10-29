@@ -15,11 +15,11 @@
     along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 }}
 {{!
-    @template mod_securevideoplayer/player
+    @template mod_securevideo/player
 
     Encrypted HLS video player with dynamic canvas watermark and custom controls.
 }}
-<div class="mod-securevideoplayer-wrapper my-3">
+<div class="mod-securevideo-wrapper my-3">
     <div id="secureVideoContainer"
          class="securevideo-player-container position-relative bg-black rounded shadow-lg overflow-hidden user-select-none"
          tabindex="0"
@@ -63,7 +63,7 @@
             {{! Center big play/pause button overlay }}
             <div class="securevideo-center-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center cursor-pointer"
                  style="z-index: 10;">
-                <button type="button" class="btn btn-dark bg-opacity-50 text-white rounded-circle p-3 securevideo-btn-bigplay" aria-label="{{#str}}play, mod_securevideoplayer{{/str}}">
+                <button type="button" class="btn btn-dark bg-opacity-50 text-white rounded-circle p-3 securevideo-btn-bigplay" aria-label="{{#str}}play, mod_securevideo{{/str}}">
                     <i class="fa fa-play fa-2x" aria-hidden="true"></i>
                 </button>
             </div>
@@ -74,9 +74,9 @@
                  class="securevideo-resume-toast position-absolute top-0 start-50 translate-middle-x mt-3 bg-dark bg-opacity-90 text-white px-3 py-2 rounded shadow d-flex align-items-center gap-2 border border-secondary"
                  style="z-index: 25;">
                 <i class="fa fa-history text-info" aria-hidden="true"></i>
-                <span class="small">{{#str}}resumeprompt, mod_securevideoplayer, {{lastposformatted}}{{/str}}</span>
-                <button type="button" class="btn btn-sm btn-primary py-0 px-2 btn-action-resume">{{#str}}resume, mod_securevideoplayer{{/str}}</button>
-                <button type="button" class="btn btn-sm btn-outline-light py-0 px-2 btn-action-dismiss">{{#str}}startover, mod_securevideoplayer{{/str}}</button>
+                <span class="small">{{#str}}resumeprompt, mod_securevideo, {{lastposformatted}}{{/str}}</span>
+                <button type="button" class="btn btn-sm btn-primary py-0 px-2 btn-action-resume">{{#str}}resume, mod_securevideo{{/str}}</button>
+                <button type="button" class="btn btn-sm btn-outline-light py-0 px-2 btn-action-dismiss">{{#str}}startover, mod_securevideo{{/str}}</button>
             </div>
             {{/hasresume}}
 
@@ -85,7 +85,7 @@
                  class="securevideo-seek-notice position-absolute top-50 start-50 translate-middle bg-dark bg-opacity-90 text-white px-3 py-2 rounded shadow d-none"
                  style="z-index: 20;">
                 <i class="fa fa-lock text-warning me-1" aria-hidden="true"></i>
-                <span>{{#str}}seekinglocked, mod_securevideoplayer{{/str}}</span>
+                <span>{{#str}}seekinglocked, mod_securevideo{{/str}}</span>
             </div>
         </div>
 
@@ -97,7 +97,7 @@
                     <div class="securevideo-buffered-bar bg-light bg-opacity-25 rounded position-absolute top-0 start-0 h-100" style="width: 0%;"></div>
                     <div class="securevideo-progress-bar bg-primary rounded position-absolute top-0 start-0 h-100" style="width: 0%;"></div>
                     {{#preventseeking}}
-                    <div class="securevideo-max-marker position-absolute top-0 h-100 bg-warning" style="width: 3px; left: 0%;" title="{{#str}}preventseeking, mod_securevideoplayer{{/str}}"></div>
+                    <div class="securevideo-max-marker position-absolute top-0 h-100 bg-warning" style="width: 3px; left: 0%;" title="{{#str}}preventseeking, mod_securevideo{{/str}}"></div>
                     {{/preventseeking}}
                 </div>
             </div>
@@ -106,12 +106,12 @@
             <div class="d-flex justify-content-between align-items-center mt-1">
                 {{! Left: Play, Volume, Time }}
                 <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-link text-white p-1 securevideo-btn-play" title="{{#str}}play, mod_securevideoplayer{{/str}}">
+                    <button type="button" class="btn btn-link text-white p-1 securevideo-btn-play" title="{{#str}}play, mod_securevideo{{/str}}">
                         <i class="fa fa-play" aria-hidden="true"></i>
                     </button>
 
                     <div class="d-flex align-items-center gap-1 securevideo-volume-group">
-                        <button type="button" class="btn btn-link text-white p-1 securevideo-btn-mute" title="{{#str}}mute, mod_securevideoplayer{{/str}}">
+                        <button type="button" class="btn btn-link text-white p-1 securevideo-btn-mute" title="{{#str}}mute, mod_securevideo{{/str}}">
                             <i class="fa fa-volume-up" aria-hidden="true"></i>
                         </button>
                         <input type="range" class="form-range securevideo-volume-slider" min="0" max="1" step="0.05" value="1" style="width: 70px;">
@@ -125,13 +125,13 @@
                 {{! Right: Progress pill, Speed, Quality, Fullscreen }}
                 <div class="d-flex align-items-center gap-2">
                     {{#hascompletionrule}}
-                    <span class="badge bg-secondary securevideo-progress-badge small" title="{{#str}}completionminpercent_desc, mod_securevideoplayer, {{completionminpercent}}{{/str}}">
-                        {{#str}}watchprogress, mod_securevideoplayer, {"percent": {{percentcompleted}}, "min": {{completionminpercent}}}{{/str}}
+                    <span class="badge bg-secondary securevideo-progress-badge small" title="{{#str}}completionminpercent_desc, mod_securevideo, {{completionminpercent}}{{/str}}">
+                        {{#str}}watchprogress, mod_securevideo, {"percent": {{percentcompleted}}, "min": {{completionminpercent}}}{{/str}}
                     </span>
                     {{/hascompletionrule}}
                     {{^hascompletionrule}}
                     <span class="badge bg-secondary securevideo-progress-badge small">
-                        {{#str}}watchprogress_no_min, mod_securevideoplayer, {{percentcompleted}}{{/str}}
+                        {{#str}}watchprogress_no_min, mod_securevideo, {{percentcompleted}}{{/str}}
                     </span>
                     {{/hascompletionrule}}
 
@@ -155,12 +155,12 @@
                             <i class="fa fa-cog me-1" aria-hidden="true"></i><span class="securevideo-current-quality">Auto</span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end securevideo-quality-menu">
-                            <li><button type="button" class="dropdown-item active" data-level="-1">{{#str}}auto, mod_securevideoplayer{{/str}}</button></li>
+                            <li><button type="button" class="dropdown-item active" data-level="-1">{{#str}}auto, mod_securevideo{{/str}}</button></li>
                         </ul>
                     </div>
 
                     {{! Fullscreen Toggle }}
-                    <button type="button" class="btn btn-link text-white p-1 securevideo-btn-fullscreen" title="{{#str}}fullscreen, mod_securevideoplayer{{/str}}">
+                    <button type="button" class="btn btn-link text-white p-1 securevideo-btn-fullscreen" title="{{#str}}fullscreen, mod_securevideo{{/str}}">
                         <i class="fa fa-expand" aria-hidden="true"></i>
                     </button>
                 </div>
@@ -170,7 +170,7 @@
 </div>
 
 {{#js}}
-require(['mod_securevideoplayer/player'], function(player) {
+require(['mod_securevideo/player'], function(player) {
     player.init('secureVideoContainer');
 });
 {{/js}}

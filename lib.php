@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Standard library callbacks and lifecycle hooks for mod_securevideoplayer.
+ * Standard library callbacks and lifecycle hooks for mod_securevideo.
  *
- * @package    mod_securevideoplayer
+ * @package    mod_securevideo
  * @copyright  2025 Mohammad Nabil <mohammad@smartlearn.education>
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -25,12 +25,12 @@
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * List of features supported in mod_securevideoplayer.
+ * List of features supported in mod_securevideo.
  *
  * @param string $feature FEATURE_xx constant for requested feature
  * @return mixed True if module supports feature, false if not, null if doesn't know
  */
-function securevideoplayer_supports(string $feature): ?bool {
+function securevideo_supports(string $feature): ?bool {
     switch ($feature) {
         case FEATURE_MOD_INTRO:
             return true;
@@ -48,13 +48,13 @@ function securevideoplayer_supports(string $feature): ?bool {
 }
 
 /**
- * Add a new securevideoplayer instance.
+ * Add a new securevideo instance.
  *
  * @param stdClass $data Post data from the form.
- * @param mod_securevideoplayer_mod_form|null $mform The form object.
+ * @param mod_securevideo_mod_form|null $mform The form object.
  * @return int The ID of the newly created instance.
  */
-function securevideoplayer_add_instance(stdClass $data, ?mod_securevideoplayer_mod_form $mform = null): int {
+function securevideo_add_instance(stdClass $data, ?mod_securevideo_mod_form $mform = null): int {
     global $DB;
 
     $data->timecreated = time();
@@ -65,17 +65,17 @@ function securevideoplayer_add_instance(stdClass $data, ?mod_securevideoplayer_m
     $data->preventseeking   = !empty($data->preventseeking) ? 1 : 0;
     $data->completionminpercent = isset($data->completionminpercent) ? (int)$data->completionminpercent : 0;
 
-    return $DB->insert_record('securevideoplayer', $data);
+    return $DB->insert_record('securevideo', $data);
 }
 
 /**
- * Update an existing securevideoplayer instance.
+ * Update an existing securevideo instance.
  *
  * @param stdClass $data Post data from the form.
- * @param mod_securevideoplayer_mod_form|null $mform The form object.
+ * @param mod_securevideo_mod_form|null $mform The form object.
  * @return bool True on success.
  */
-function securevideoplayer_update_instance(stdClass $data, ?mod_securevideoplayer_mod_form $mform = null): bool {
+function securevideo_update_instance(stdClass $data, ?mod_securevideo_mod_form $mform = null): bool {
     global $DB;
 
     $data->id = $data->instance;
@@ -86,24 +86,24 @@ function securevideoplayer_update_instance(stdClass $data, ?mod_securevideoplaye
     $data->preventseeking   = !empty($data->preventseeking) ? 1 : 0;
     $data->completionminpercent = isset($data->completionminpercent) ? (int)$data->completionminpercent : 0;
 
-    return $DB->update_record('securevideoplayer', $data);
+    return $DB->update_record('securevideo', $data);
 }
 
 /**
- * Delete an existing securevideoplayer instance and associated student progress.
+ * Delete an existing securevideo instance and associated student progress.
  *
  * @param int $id The instance ID.
  * @return bool True on success.
  */
-function securevideoplayer_delete_instance(int $id): bool {
+function securevideo_delete_instance(int $id): bool {
     global $DB;
 
-    if (!$DB->record_exists('securevideoplayer', ['id' => $id])) {
+    if (!$DB->record_exists('securevideo', ['id' => $id])) {
         return false;
     }
 
-    $DB->delete_records('securevideoplayer_progress', ['instanceid' => $id]);
-    $DB->delete_records('securevideoplayer', ['id' => $id]);
+    $DB->delete_records('securevideo_progress', ['instanceid' => $id]);
+    $DB->delete_records('securevideo', ['id' => $id]);
 
     return true;
 }
@@ -115,26 +115,26 @@ function securevideoplayer_delete_instance(int $id): bool {
  * @param navigation_node|null $navref The current node reference.
  * @return void
  */
-function securevideoplayer_extend_settings_navigation(
+function securevideo_extend_settings_navigation(
     settings_navigation $settingsnav,
     ?navigation_node $navref = null
 ): void {
     global $PAGE;
 
     $cm = $PAGE->cm;
-    if (!$cm || $cm->modname !== 'securevideoplayer' || !$navref) {
+    if (!$cm || $cm->modname !== 'securevideo' || !$navref) {
         return;
     }
 
     $context = context_module::instance($cm->id);
-    if (has_capability('mod/securevideoplayer:viewreports', $context)) {
-        $reporturl = new moodle_url('/mod/securevideoplayer/report.php', ['id' => $cm->id]);
+    if (has_capability('mod/securevideo:viewreports', $context)) {
+        $reporturl = new moodle_url('/mod/securevideo/report.php', ['id' => $cm->id]);
         $navref->add(
-            get_string('report', 'mod_securevideoplayer'),
+            get_string('report', 'mod_securevideo'),
             $reporturl,
-            navigation_node::TYPE_SETTING,
+            settings_navigation::TYPE_SETTING,
             null,
-            'securevideoplayer_report',
+            'securevideo_report',
             new pix_icon('i/report', '')
         );
     }
@@ -149,16 +149,16 @@ function securevideoplayer_extend_settings_navigation(
  * @param bool $type The completion type.
  * @return bool True if completed, false otherwise.
  */
-function securevideoplayer_get_completion_state(stdClass $course, $cm, int $userid, bool $type): bool {
+function securevideo_get_completion_state(stdClass $course, $cm, int $userid, bool $type): bool {
     global $DB;
 
-    $instance = $DB->get_record('securevideoplayer', ['id' => $cm->instance], '*', MUST_EXIST);
+    $instance = $DB->get_record('securevideo', ['id' => $cm->instance], '*', MUST_EXIST);
 
     if (empty($instance->completionminpercent)) {
         return true;
     }
 
-    $progress = $DB->get_record('securevideoplayer_progress', [
+    $progress = $DB->get_record('securevideo_progress', [
         'instanceid' => $instance->id,
         'userid'     => $userid,
     ]);

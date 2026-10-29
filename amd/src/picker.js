@@ -14,9 +14,9 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Interactive video library picker modal for mod_securevideoplayer.
+ * Interactive video library picker modal for mod_securevideo.
  *
- * @module     mod_securevideoplayer/picker
+ * @module     mod_securevideo/picker
  * @copyright  2025 Mohammad Nabil <mohammad@smartlearn.education>
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -86,7 +86,7 @@ define(['core/ajax', 'core/notification', 'core/templates'], function(Ajax, Noti
             }
 
             const renderPromises = readyVideos.map(function(video) {
-                return Templates.render('mod_securevideoplayer/picker_card', video);
+                return Templates.render('mod_securevideo/picker_card', video);
             });
 
             Promise.all(renderPromises).then(function(renderedHtmls) {

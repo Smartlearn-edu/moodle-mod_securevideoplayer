@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace mod_securevideoplayer\privacy;
+namespace mod_securevideo\privacy;
 
 use core_privacy\local\metadata\collection;
 use core_privacy\local\request\contextlist;
@@ -26,9 +26,9 @@ use core_privacy\local\request\transform;
 use context_module;
 
 /**
- * Privacy API provider for mod_securevideoplayer.
+ * Privacy API provider for mod_securevideo.
  *
- * @package    mod_securevideoplayer
+ * @package    mod_securevideo
  * @copyright  2025 Mohammad Nabil <mohammad@smartlearn.education>
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -44,16 +44,16 @@ class provider implements
      */
     public static function get_metadata(collection $collection): collection {
         $collection->add_database_table(
-            'securevideoplayer_progress',
+            'securevideo_progress',
             [
-                'userid'           => 'privacy:metadata:securevideoplayer_progress:userid',
-                'lastposition'     => 'privacy:metadata:securevideoplayer_progress:lastposition',
-                'maxposition'      => 'privacy:metadata:securevideoplayer_progress:maxposition',
-                'watchedseconds'   => 'privacy:metadata:securevideoplayer_progress:watchedseconds',
-                'percentcompleted' => 'privacy:metadata:securevideoplayer_progress:percentcompleted',
-                'timemodified'     => 'privacy:metadata:securevideoplayer_progress:timemodified',
+                'userid'           => 'privacy:metadata:securevideo_progress:userid',
+                'lastposition'     => 'privacy:metadata:securevideo_progress:lastposition',
+                'maxposition'      => 'privacy:metadata:securevideo_progress:maxposition',
+                'watchedseconds'   => 'privacy:metadata:securevideo_progress:watchedseconds',
+                'percentcompleted' => 'privacy:metadata:securevideo_progress:percentcompleted',
+                'timemodified'     => 'privacy:metadata:securevideo_progress:timemodified',
             ],
-            'privacy:metadata:securevideoplayer_progress'
+            'privacy:metadata:securevideo_progress'
         );
 
         return $collection;
@@ -71,11 +71,11 @@ class provider implements
         $sql = "SELECT cm.id
                   FROM {course_modules} cm
                   JOIN {modules} m ON m.id = cm.module AND m.name = :modname
-                  JOIN {securevideoplayer} p ON p.id = cm.instance
-                  JOIN {securevideoplayer_progress} prog ON prog.instanceid = p.id
+                  JOIN {securevideo} p ON p.id = cm.instance
+                  JOIN {securevideo_progress} prog ON prog.instanceid = p.id
                  WHERE prog.userid = :userid";
 
-        $contextlist->add_from_sql($sql, ['modname' => 'securevideoplayer', 'userid' => $userid]);
+        $contextlist->add_from_sql($sql, ['modname' => 'securevideo', 'userid' => $userid]);
 
         return $contextlist;
     }
@@ -96,12 +96,12 @@ class provider implements
         $sql = "SELECT prog.userid
                   FROM {course_modules} cm
                   JOIN {modules} m ON m.id = cm.module AND m.name = :modname
-                  JOIN {securevideoplayer} p ON p.id = cm.instance
-                  JOIN {securevideoplayer_progress} prog ON prog.instanceid = p.id
+                  JOIN {securevideo} p ON p.id = cm.instance
+                  JOIN {securevideo_progress} prog ON prog.instanceid = p.id
                  WHERE cm.id = :cmid";
 
         $userlist->add_from_sql('userid', $sql, [
-            'modname' => 'securevideoplayer',
+            'modname' => 'securevideo',
             'cmid'    => $context->instanceid,
         ]);
     }
@@ -122,12 +122,12 @@ class provider implements
                 continue;
             }
 
-            $cm = get_coursemodule_from_id('securevideoplayer', $context->instanceid);
+            $cm = get_coursemodule_from_id('securevideo', $context->instanceid);
             if (!$cm) {
                 continue;
             }
 
-            $progress = $DB->get_record('securevideoplayer_progress', [
+            $progress = $DB->get_record('securevideo_progress', [
                 'instanceid' => $cm->instance,
                 'userid'     => $user->id,
             ]);
@@ -142,7 +142,7 @@ class provider implements
                 ];
 
                 writer::with_context($context)->export_data(
-                    [get_string('pluginname', 'mod_securevideoplayer'), 'progress'],
+                    [get_string('pluginname', 'mod_securevideo'), 'progress'],
                     $data
                 );
             }
@@ -162,9 +162,9 @@ class provider implements
             return;
         }
 
-        $cm = get_coursemodule_from_id('securevideoplayer', $context->instanceid);
+        $cm = get_coursemodule_from_id('securevideo', $context->instanceid);
         if ($cm) {
-            $DB->delete_records('securevideoplayer_progress', ['instanceid' => $cm->instance]);
+            $DB->delete_records('securevideo_progress', ['instanceid' => $cm->instance]);
         }
     }
 
@@ -184,9 +184,9 @@ class provider implements
                 continue;
             }
 
-            $cm = get_coursemodule_from_id('securevideoplayer', $context->instanceid);
+            $cm = get_coursemodule_from_id('securevideo', $context->instanceid);
             if ($cm) {
-                $DB->delete_records('securevideoplayer_progress', [
+                $DB->delete_records('securevideo_progress', [
                     'instanceid' => $cm->instance,
                     'userid'     => $user->id,
                 ]);
@@ -208,7 +208,7 @@ class provider implements
             return;
         }
 
-        $cm = get_coursemodule_from_id('securevideoplayer', $context->instanceid);
+        $cm = get_coursemodule_from_id('securevideo', $context->instanceid);
         if (!$cm) {
             return;
         }
@@ -222,7 +222,7 @@ class provider implements
         $params['instanceid'] = $cm->instance;
 
         $DB->delete_records_select(
-            'securevideoplayer_progress',
+            'securevideo_progress',
             "instanceid = :instanceid AND userid $insql",
             $params
         );

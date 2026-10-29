@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/securevideoplayer/db" VERSION="20261029" COMMENT="XMLDB file for mod_securevideoplayer"
+<XMLDB PATH="mod/securevideo/db" VERSION="20261029" COMMENT="XMLDB file for mod_securevideo"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
   <TABLES>
-    <TABLE NAME="securevideoplayer" COMMENT="Defines instances of the Secure Video Player course activity">
+    <TABLE NAME="securevideo" COMMENT="Defines instances of the Secure Video course activity">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="course" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Course ID"/>
@@ -27,10 +27,10 @@
         <INDEX NAME="mediaid_idx" UNIQUE="false" FIELDS="mediaid"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="securevideoplayer_progress" COMMENT="Stores student watch progress, bookmarks and merged intervals">
+    <TABLE NAME="securevideo_progress" COMMENT="Stores student watch progress, bookmarks and merged intervals">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="instanceid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="FK to securevideoplayer.id"/>
+        <FIELD NAME="instanceid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="FK to securevideo.id"/>
         <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="User ID"/>
         <FIELD NAME="lastposition" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Last playback position in seconds"/>
         <FIELD NAME="maxposition" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Furthest watched position in seconds for anti-seeking"/>
@@ -41,7 +41,7 @@
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="instanceid_fk" TYPE="foreign" FIELDS="instanceid" REFTABLE="securevideoplayer" REFFIELDS="id"/>
+        <KEY NAME="instanceid_fk" TYPE="foreign" FIELDS="instanceid" REFTABLE="securevideo" REFFIELDS="id"/>
       </KEYS>
       <INDEXES>
         <INDEX NAME="instanceid_userid_idx" UNIQUE="true" FIELDS="instanceid, userid"/>

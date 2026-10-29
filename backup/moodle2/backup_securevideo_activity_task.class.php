@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Defines backup_securevideoplayer_activity_task class.
+ * Defines backup_securevideo_activity_task class.
  *
- * @package    mod_securevideoplayer
+ * @package    mod_securevideo
  * @category   backup
  * @copyright  2025 Mohammad Nabil <mohammad@smartlearn.education>
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -25,12 +25,12 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/mod/securevideoplayer/backup/moodle2/backup_securevideoplayer_stepslib.php');
+require_once($CFG->dirroot . '/mod/securevideo/backup/moodle2/backup_securevideo_stepslib.php');
 
 /**
- * Provides the steps to perform one complete backup of the securevideoplayer instance.
+ * Provides the steps to perform one complete backup of the securevideo instance.
  */
-class backup_securevideoplayer_activity_task extends backup_activity_task {
+class backup_securevideo_activity_task extends backup_activity_task {
     /**
      * No specific settings for this activity.
      */
@@ -38,12 +38,12 @@ class backup_securevideoplayer_activity_task extends backup_activity_task {
     }
 
     /**
-     * Defines a backup step to store the instance data in the securevideoplayer.xml file.
+     * Defines a backup step to store the instance data in the securevideo.xml file.
      */
     protected function define_my_steps(): void {
-        $this->add_step(new backup_securevideoplayer_activity_structure_step(
-            'securevideoplayer_structure',
-            'securevideoplayer.xml'
+        $this->add_step(new backup_securevideo_activity_structure_step(
+            'securevideo_structure',
+            'securevideo.xml'
         ));
     }
 
@@ -58,13 +58,13 @@ class backup_securevideoplayer_activity_task extends backup_activity_task {
 
         $base = preg_quote($CFG->wwwroot, '/');
 
-        // Link to the list of securevideoplayers.
-        $search = '/(' . $base . '\/mod\/securevideoplayer\/index\.php\?id\=)([0-9]+)/';
-        $content = preg_replace($search, '$@SECUREVIDEOPLAYERINDEX*$2@$', $content);
+        // Link to the list of securevideos.
+        $search = '/(' . $base . '\/mod\/securevideo\/index\.php\?id\=)([0-9]+)/';
+        $content = preg_replace($search, '$@SECUREVIDEOINDEX*$2@$', $content);
 
-        // Link to securevideoplayer view by moduleid.
-        $search = '/(' . $base . '\/mod\/securevideoplayer\/view\.php\?id\=)([0-9]+)/';
-        $content = preg_replace($search, '$@SECUREVIDEOPLAYERVIEWBYID*$2@$', $content);
+        // Link to securevideo view by moduleid.
+        $search = '/(' . $base . '\/mod\/securevideo\/view\.php\?id\=)([0-9]+)/';
+        $content = preg_replace($search, '$@SECUREVIDEOVIEWBYID*$2@$', $content);
 
         return $content;
     }

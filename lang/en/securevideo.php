@@ -15,25 +15,25 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * English strings for mod_securevideoplayer.
+ * English strings for mod_securevideo.
  *
- * @package    mod_securevideoplayer
+ * @package    mod_securevideo
  * @copyright  2025 Mohammad Nabil <mohammad@smartlearn.education>
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Secure Video Player';
-$string['modulename'] = 'Secure Video Player';
-$string['modulenameplural'] = 'Secure Video Players';
+$string['pluginname'] = 'Secure Video';
+$string['modulename'] = 'Secure Video';
+$string['modulenameplural'] = 'Secure Videos';
 $string['modulename_help'] = 'Protected HTML5 video player with AES-128 HLS encryption, anti-download shielding, dynamic moving watermark, and granular watch-time completion tracking.';
-$string['pluginadministration'] = 'Secure Video Player administration';
+$string['pluginadministration'] = 'Secure Video administration';
 
 // Capabilities.
-$string['securevideoplayer:addinstance'] = 'Add a new secure video player activity';
-$string['securevideoplayer:view'] = 'View the secure video player';
-$string['securevideoplayer:viewreports'] = 'View student watch progress reports';
+$string['securevideo:addinstance'] = 'Add a new secure video activity';
+$string['securevideo:view'] = 'View the secure video activity';
+$string['securevideo:viewreports'] = 'View student watch progress reports';
 
 // Activity Form & Video Selection.
 $string['videoselection'] = 'Video Selection';
@@ -104,10 +104,10 @@ $string['backtovideo'] = 'Back to Video';
 $string['nostudentsfound'] = 'No enrolled students found in this course.';
 
 // Privacy API.
-$string['privacy:metadata:securevideoplayer_progress'] = 'Stores watch progress, bookmarks, and completion tracking for each student.';
-$string['privacy:metadata:securevideoplayer_progress:userid'] = 'The user ID of the student.';
-$string['privacy:metadata:securevideoplayer_progress:lastposition'] = 'The last playback timestamp in seconds for resume bookmarking.';
-$string['privacy:metadata:securevideoplayer_progress:maxposition'] = 'The furthest position reached in seconds for forward-seek locking.';
-$string['privacy:metadata:securevideoplayer_progress:watchedseconds'] = 'Total unique seconds watched across sessions.';
-$string['privacy:metadata:securevideoplayer_progress:percentcompleted'] = 'Calculated percentage of video watched.';
-$string['privacy:metadata:securevideoplayer_progress:timemodified'] = 'The timestamp when progress was last recorded.';
+$string['privacy:metadata:securevideo_progress'] = 'Stores watch progress, bookmarks, and completion tracking for each student.';
+$string['privacy:metadata:securevideo_progress:userid'] = 'The user ID of the student.';
+$string['privacy:metadata:securevideo_progress:lastposition'] = 'The last playback timestamp in seconds for resume bookmarking.';
+$string['privacy:metadata:securevideo_progress:maxposition'] = 'The furthest position reached in seconds for forward-seek locking.';
+$string['privacy:metadata:securevideo_progress:watchedseconds'] = 'Total unique seconds watched across sessions.';
+$string['privacy:metadata:securevideo_progress:percentcompleted'] = 'Calculated percentage of video watched.';
+$string['privacy:metadata:securevideo_progress:timemodified'] = 'The timestamp when progress was last recorded.';

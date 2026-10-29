@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Lists all instances of mod_securevideoplayer in a course.
+ * Lists all instances of mod_securevideo in a course.
  *
- * @package    mod_securevideoplayer
+ * @package    mod_securevideo
  * @copyright  2025 Mohammad Nabil <mohammad@smartlearn.education>
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -26,4 +26,4 @@ require_once(__DIR__ . '/../../config.php');
 
 $courseid = required_param('id', PARAM_INT);
 
-\core_courseformat\activityoverviewbase::redirect_to_overview_page($courseid, 'securevideoplayer');
+\core_courseformat\activityoverviewbase::redirect_to_overview_page($courseid, 'securevideo');

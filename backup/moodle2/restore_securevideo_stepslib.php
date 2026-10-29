@@ -15,18 +15,18 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Define all the restore steps for mod_securevideoplayer.
+ * Define all the restore steps for mod_securevideo.
  *
- * @package    mod_securevideoplayer
+ * @package    mod_securevideo
  * @category   backup
  * @copyright  2025 Mohammad Nabil <mohammad@smartlearn.education>
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 /**
- * Structure step to restore one securevideoplayer activity.
+ * Structure step to restore one securevideo activity.
  */
-class restore_securevideoplayer_activity_structure_step extends restore_activity_structure_step {
+class restore_securevideo_activity_structure_step extends restore_activity_structure_step {
     /**
      * Define the structure of the restore step.
      *
@@ -34,24 +34,24 @@ class restore_securevideoplayer_activity_structure_step extends restore_activity
      */
     protected function define_structure(): array {
         $paths = [];
-        $paths[] = new restore_path_element('securevideoplayer', '/activity/securevideoplayer');
+        $paths[] = new restore_path_element('securevideo', '/activity/securevideo');
 
         return $this->prepare_activity_structure($paths);
     }
 
     /**
-     * Process a securevideoplayer restore element.
+     * Process a securevideo restore element.
      *
      * @param array $data The data to restore.
      * @return void
      */
-    protected function process_securevideoplayer(array $data): void {
+    protected function process_securevideo(array $data): void {
         global $DB;
 
         $data = (object)$data;
         $data->course = $this->get_courseid();
 
-        $newitemid = $DB->insert_record('securevideoplayer', $data);
+        $newitemid = $DB->insert_record('securevideo', $data);
         $this->apply_activity_instance($newitemid);
     }
 
@@ -61,6 +61,6 @@ class restore_securevideoplayer_activity_structure_step extends restore_activity
      * @return void
      */
     protected function after_execute(): void {
-        $this->add_related_files('mod_securevideoplayer', 'intro', null);
+        $this->add_related_files('mod_securevideo', 'intro', null);
     }
 }

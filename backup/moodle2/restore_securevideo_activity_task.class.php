@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Defines restore_securevideoplayer_activity_task class.
+ * Defines restore_securevideo_activity_task class.
  *
- * @package    mod_securevideoplayer
+ * @package    mod_securevideo
  * @category   backup
  * @copyright  2025 Mohammad Nabil <mohammad@smartlearn.education>
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -25,12 +25,12 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/mod/securevideoplayer/backup/moodle2/restore_securevideoplayer_stepslib.php');
+require_once($CFG->dirroot . '/mod/securevideo/backup/moodle2/restore_securevideo_stepslib.php');
 
 /**
- * Provides the steps to perform one complete restore of the securevideoplayer instance.
+ * Provides the steps to perform one complete restore of the securevideo instance.
  */
-class restore_securevideoplayer_activity_task extends restore_activity_task {
+class restore_securevideo_activity_task extends restore_activity_task {
     /**
      * Define the settings for this activity.
      */
@@ -41,9 +41,9 @@ class restore_securevideoplayer_activity_task extends restore_activity_task {
      * Define the steps for this activity.
      */
     protected function define_my_steps(): void {
-        $this->add_step(new restore_securevideoplayer_activity_structure_step(
-            'securevideoplayer_structure',
-            'securevideoplayer.xml'
+        $this->add_step(new restore_securevideo_activity_structure_step(
+            'securevideo_structure',
+            'securevideo.xml'
         ));
     }
 
@@ -55,7 +55,7 @@ class restore_securevideoplayer_activity_task extends restore_activity_task {
     public static function define_decode_contents(): array {
         $contents = [];
 
-        $contents[] = new restore_decode_content('securevideoplayer', ['intro'], 'securevideoplayer');
+        $contents[] = new restore_decode_content('securevideo', ['intro'], 'securevideo');
 
         return $contents;
     }
@@ -68,8 +68,8 @@ class restore_securevideoplayer_activity_task extends restore_activity_task {
     public static function define_decode_rules(): array {
         $rules = [];
 
-        $rules[] = new restore_decode_rule('SECUREVIDEOPLAYERVIEWBYID', '/mod/securevideoplayer/view.php?id=$1', 'course_module');
-        $rules[] = new restore_decode_rule('SECUREVIDEOPLAYERINDEX', '/mod/securevideoplayer/index.php?id=$1', 'course');
+        $rules[] = new restore_decode_rule('SECUREVIDEOVIEWBYID', '/mod/securevideo/view.php?id=$1', 'course_module');
+        $rules[] = new restore_decode_rule('SECUREVIDEOINDEX', '/mod/securevideo/index.php?id=$1', 'course');
 
         return $rules;
     }
@@ -82,9 +82,9 @@ class restore_securevideoplayer_activity_task extends restore_activity_task {
     public static function define_restore_log_rules(): array {
         $rules = [];
 
-        $rules[] = new restore_log_rule('securevideoplayer', 'add', 'view.php?id={id}', '{name}');
-        $rules[] = new restore_log_rule('securevideoplayer', 'update', 'view.php?id={id}', '{name}');
-        $rules[] = new restore_log_rule('securevideoplayer', 'view', 'view.php?id={id}', '{name}');
+        $rules[] = new restore_log_rule('securevideo', 'add', 'view.php?id={id}', '{name}');
+        $rules[] = new restore_log_rule('securevideo', 'update', 'view.php?id={id}', '{name}');
+        $rules[] = new restore_log_rule('securevideo', 'view', 'view.php?id={id}', '{name}');
 
         return $rules;
     }
@@ -97,7 +97,7 @@ class restore_securevideoplayer_activity_task extends restore_activity_task {
     public static function define_restore_log_rules_for_course(): array {
         $rules = [];
 
-        $rules[] = new restore_log_rule('securevideoplayer', 'view all', 'index.php?id={id}');
+        $rules[] = new restore_log_rule('securevideo', 'view all', 'index.php?id={id}');
 
         return $rules;
     }

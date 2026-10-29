@@ -15,18 +15,18 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Define all the backup steps for mod_securevideoplayer.
+ * Define all the backup steps for mod_securevideo.
  *
- * @package    mod_securevideoplayer
+ * @package    mod_securevideo
  * @category   backup
  * @copyright  2025 Mohammad Nabil <mohammad@smartlearn.education>
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 /**
- * Define the complete securevideoplayer structure for backup.
+ * Define the complete securevideo structure for backup.
  */
-class backup_securevideoplayer_activity_structure_step extends backup_activity_structure_step {
+class backup_securevideo_activity_structure_step extends backup_activity_structure_step {
     /**
      * Define the structure of the backup.
      *
@@ -34,7 +34,7 @@ class backup_securevideoplayer_activity_structure_step extends backup_activity_s
      */
     protected function define_structure(): backup_nested_element {
         // Define root activity element.
-        $securevideoplayer = new backup_nested_element('securevideoplayer', ['id'], [
+        $securevideo = new backup_nested_element('securevideo', ['id'], [
             'name',
             'intro',
             'introformat',
@@ -48,11 +48,11 @@ class backup_securevideoplayer_activity_structure_step extends backup_activity_s
         ]);
 
         // Sources.
-        $securevideoplayer->set_source_table('securevideoplayer', ['id' => backup::VAR_ACTIVITYID]);
+        $securevideo->set_source_table('securevideo', ['id' => backup::VAR_ACTIVITYID]);
 
         // Annotations.
-        $securevideoplayer->annotate_files('mod_securevideoplayer', 'intro', null);
+        $securevideo->annotate_files('mod_securevideo', 'intro', null);
 
-        return $this->prepare_activity_structure($securevideoplayer);
+        return $this->prepare_activity_structure($securevideo);
     }
 }

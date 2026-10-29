@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Web service declarations for mod_securevideoplayer.
+ * Web service declarations for mod_securevideo.
  *
- * @package    mod_securevideoplayer
+ * @package    mod_securevideo
  * @copyright  2025 Mohammad Nabil <mohammad@smartlearn.education>
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -25,8 +25,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $functions = [
-    'mod_securevideoplayer_update_progress' => [
-        'classname'   => 'mod_securevideoplayer\external\update_progress',
+    'mod_securevideo_update_progress' => [
+        'classname'   => 'mod_securevideo\external\update_progress',
         'methodname'  => 'execute',
         'description' => 'Update student watch progress, bookmark and evaluate completion',
         'type'        => 'write',

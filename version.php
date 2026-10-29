@@ -15,16 +15,16 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Version details for mod_securevideoplayer.
+ * Version details for mod_securevideo.
  *
- * @package    mod_securevideoplayer
+ * @package    mod_securevideo
  * @copyright  2025 Mohammad Nabil <mohammad@smartlearn.education>
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'mod_securevideoplayer';
+$plugin->component = 'mod_securevideo';
 $plugin->version   = 2026102901;
 $plugin->requires  = 2024100700; // Requires Moodle 5.0+.
 $plugin->maturity  = MATURITY_ALPHA;

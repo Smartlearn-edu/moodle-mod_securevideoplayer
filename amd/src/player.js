@@ -16,7 +16,7 @@
 /**
  * Hardened HLS player engine, dynamic moving watermark, anti-seek, and watch tracker.
  *
- * @module     mod_securevideoplayer/player
+ * @module     mod_securevideo/player
  * @copyright  2025 Mohammad Nabil <mohammad@smartlearn.education>
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -705,7 +705,7 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             const maxPos = Math.floor(this.maxPosition || 0);
 
             const request = {
-                methodname: 'mod_securevideoplayer_update_progress',
+                methodname: 'mod_securevideo_update_progress',
                 args: {
                     cmid: self.cmid,
                     currentposition: cur,

@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Watch progress report for mod_securevideoplayer.
+ * Watch progress report for mod_securevideo.
  *
- * @package    mod_securevideoplayer
+ * @package    mod_securevideo
  * @copyright  2025 Mohammad Nabil <mohammad@smartlearn.education>
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -26,15 +26,15 @@ require_once(__DIR__ . '/../../config.php');
 
 $id = required_param('id', PARAM_INT); // Course Module ID.
 
-[$course, $cm] = get_course_and_cm_from_cmid($id, 'securevideoplayer');
-$instance = $DB->get_record('securevideoplayer', ['id' => $cm->instance], '*', MUST_EXIST);
+[$course, $cm] = get_course_and_cm_from_cmid($id, 'securevideo');
+$instance = $DB->get_record('securevideo', ['id' => $cm->instance], '*', MUST_EXIST);
 
 require_login($course, true, $cm);
 $context = context_module::instance($cm->id);
-require_capability('mod/securevideoplayer:viewreports', $context);
+require_capability('mod/securevideo:viewreports', $context);
 
-$PAGE->set_url('/mod/securevideoplayer/report.php', ['id' => $cm->id]);
-$PAGE->set_title(format_string($instance->name) . ': ' . get_string('report', 'mod_securevideoplayer'));
+$PAGE->set_url('/mod/securevideo/report.php', ['id' => $cm->id]);
+$PAGE->set_title(format_string($instance->name) . ': ' . get_string('report', 'mod_securevideo'));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_pagelayout('incourse');
 
@@ -50,11 +50,11 @@ $dursecs = $duration % 60;
 $durationformatted = sprintf('%02d:%02d', $durmins, $dursecs);
 
 // Enrolled users.
-$users = get_enrolled_users($context, 'mod/securevideoplayer:view', 0, 'u.*', 'u.lastname ASC, u.firstname ASC');
+$users = get_enrolled_users($context, 'mod/securevideo:view', 0, 'u.*', 'u.lastname ASC, u.firstname ASC');
 
 // Watch progress records indexed by userid.
 $progressrecords = $DB->get_records(
-    'securevideoplayer_progress',
+    'securevideo_progress',
     ['instanceid' => $instance->id],
     '',
     'userid, watchedseconds, percentcompleted, lastposition, completed, timemodified'
@@ -81,13 +81,13 @@ foreach ($users as $user) {
         if ($iscompleted) {
             $totalcompleted++;
             $statusclass = 'badge bg-success';
-            $statustext = get_string('completed', 'mod_securevideoplayer');
+            $statustext = get_string('completed', 'mod_securevideo');
         } else if ($watchedsec > 0) {
             $statusclass = 'badge bg-primary';
-            $statustext = get_string('in_progress', 'mod_securevideoplayer');
+            $statustext = get_string('in_progress', 'mod_securevideo');
         } else {
             $statusclass = 'badge bg-secondary';
-            $statustext = get_string('notstarted', 'mod_securevideoplayer');
+            $statustext = get_string('notstarted', 'mod_securevideo');
         }
 
         $watchedformatted = sprintf('%02d:%02d', floor($watchedsec / 60), $watchedsec % 60);
@@ -97,7 +97,7 @@ foreach ($users as $user) {
     } else {
         $percent = 0;
         $statusclass = 'badge bg-secondary';
-        $statustext = get_string('notstarted', 'mod_securevideoplayer');
+        $statustext = get_string('notstarted', 'mod_securevideo');
         $watchedformatted = '00:00';
         $lastposformatted = '00:00';
         $lastupdated = '-';
@@ -131,10 +131,10 @@ $data = [
     'avgpercent' => $avgpercent,
     'hasstudents' => !empty($studentsdata),
     'students' => $studentsdata,
-    'backurl' => (new moodle_url('/mod/securevideoplayer/view.php', ['id' => $cm->id]))->out(false),
+    'backurl' => (new moodle_url('/mod/securevideo/view.php', ['id' => $cm->id]))->out(false),
     'completionminpercent' => (int)($instance->completionminpercent ?? 0),
 ];
 
 echo $OUTPUT->header();
-echo $OUTPUT->render_from_template('mod_securevideoplayer/report', $data);
+echo $OUTPUT->render_from_template('mod_securevideo/report', $data);
 echo $OUTPUT->footer();

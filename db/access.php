@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Capability definitions for mod_securevideoplayer.
+ * Capability definitions for mod_securevideo.
  *
- * @package    mod_securevideoplayer
+ * @package    mod_securevideo
  * @copyright  2025 Mohammad Nabil <mohammad@smartlearn.education>
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $capabilities = [
-    'mod/securevideoplayer:addinstance' => [
+    'mod/securevideo:addinstance' => [
         'riskbitmask'  => RISK_XSS,
         'captype'      => 'write',
         'contextlevel' => CONTEXT_COURSE,
@@ -36,7 +36,7 @@ $capabilities = [
         'clonepermissionsfrom' => 'moodle/course:manageactivities',
     ],
 
-    'mod/securevideoplayer:view' => [
+    'mod/securevideo:view' => [
         'captype'      => 'read',
         'contextlevel' => CONTEXT_MODULE,
         'archetypes'   => [
@@ -48,7 +48,7 @@ $capabilities = [
         ],
     ],
 
-    'mod/securevideoplayer:viewreports' => [
+    'mod/securevideo:viewreports' => [
         'captype'      => 'read',
         'contextlevel' => CONTEXT_MODULE,
         'archetypes'   => [

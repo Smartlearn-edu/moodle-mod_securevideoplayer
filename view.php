@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Course activity player view controller for mod_securevideoplayer.
+ * Course activity player view controller for mod_securevideo.
  *
- * @package    mod_securevideoplayer
+ * @package    mod_securevideo
  * @copyright  2025 Mohammad Nabil <mohammad@smartlearn.education>
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -26,61 +26,61 @@ require_once(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
 
 $id = optional_param('id', 0, PARAM_INT); // Course Module ID.
-$s  = optional_param('s', 0, PARAM_INT);  // securevideoplayer instance ID.
+$s  = optional_param('s', 0, PARAM_INT);  // securevideo instance ID.
 
 if ($id) {
-    $cm = get_coursemodule_from_id('securevideoplayer', $id, 0, false, MUST_EXIST);
+    $cm = get_coursemodule_from_id('securevideo', $id, 0, false, MUST_EXIST);
     $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
-    $securevideoplayer = $DB->get_record('securevideoplayer', ['id' => $cm->instance], '*', MUST_EXIST);
+    $securevideo = $DB->get_record('securevideo', ['id' => $cm->instance], '*', MUST_EXIST);
 } else if ($s) {
-    $securevideoplayer = $DB->get_record('securevideoplayer', ['id' => $s], '*', MUST_EXIST);
-    $course = $DB->get_record('course', ['id' => $securevideoplayer->course], '*', MUST_EXIST);
-    $cm = get_coursemodule_from_instance('securevideoplayer', $securevideoplayer->id, $course->id, false, MUST_EXIST);
+    $securevideo = $DB->get_record('securevideo', ['id' => $s], '*', MUST_EXIST);
+    $course = $DB->get_record('course', ['id' => $securevideo->course], '*', MUST_EXIST);
+    $cm = get_coursemodule_from_instance('securevideo', $securevideo->id, $course->id, false, MUST_EXIST);
 } else {
     throw new moodle_exception('invalidcoursemodule');
 }
 
 require_login($course, true, $cm);
 $context = context_module::instance($cm->id);
-require_capability('mod/securevideoplayer:view', $context);
+require_capability('mod/securevideo:view', $context);
 
 // Trigger course_module_viewed event.
-\mod_securevideoplayer\event\course_module_viewed::create_from_cm($cm)->trigger();
+\mod_securevideo\event\course_module_viewed::create_from_cm($cm)->trigger();
 
 // Completion view tracking.
 $completion = new \completion_info($course);
 $completion->set_module_viewed($cm);
 
-$pageurl = new moodle_url('/mod/securevideoplayer/view.php', ['id' => $cm->id]);
+$pageurl = new moodle_url('/mod/securevideo/view.php', ['id' => $cm->id]);
 $PAGE->set_url($pageurl);
-$PAGE->set_title($securevideoplayer->name);
+$PAGE->set_title($securevideo->name);
 $PAGE->set_heading($course->fullname);
 $PAGE->set_context($context);
-$PAGE->set_activity_record($securevideoplayer);
+$PAGE->set_activity_record($securevideo);
 
 // Fetch linked media record from central library.
 $media = null;
-if (!empty($securevideoplayer->mediaid)) {
-    $media = $DB->get_record('local_securevideolibrary_media', ['id' => $securevideoplayer->mediaid]);
+if (!empty($securevideo->mediaid)) {
+    $media = $DB->get_record('local_securevideolibrary_media', ['id' => $securevideo->mediaid]);
 }
 
 echo $OUTPUT->header();
 
-$intro = format_module_intro('securevideoplayer', $securevideoplayer, $cm->id);
+$intro = format_module_intro('securevideo', $securevideo, $cm->id);
 if (!empty($intro)) {
     echo $intro;
 }
 
 if (!$media || $media->status !== 'ready') {
     if ($media && ($media->status === 'queued' || $media->status === 'processing')) {
-        echo $OUTPUT->notification(get_string('videonotready', 'mod_securevideoplayer'), 'info');
+        echo $OUTPUT->notification(get_string('videonotready', 'mod_securevideo'), 'info');
     } else {
-        echo $OUTPUT->notification(get_string('novideowarning', 'mod_securevideoplayer'), 'warning');
+        echo $OUTPUT->notification(get_string('novideowarning', 'mod_securevideo'), 'warning');
     }
 } else {
     // Fetch user progress.
-    $progress = $DB->get_record('securevideoplayer_progress', [
-        'instanceid' => $securevideoplayer->id,
+    $progress = $DB->get_record('securevideo_progress', [
+        'instanceid' => $securevideo->id,
         'userid'     => $USER->id,
     ]);
 
@@ -107,7 +107,7 @@ if (!$media || $media->status !== 'ready') {
 
     $playerdata = [
         'cmid'                 => (int)$cm->id,
-        'title'                => $securevideoplayer->name,
+        'title'                => $securevideo->name,
         'playlisturl'          => $playlisturl,
         'thumbnailurl'         => $thumbnailurl,
         'duration'             => (int)$media->duration,
@@ -119,18 +119,18 @@ if (!$media || $media->status !== 'ready') {
         'watchedseconds'       => $progress ? (int)$progress->watchedseconds : 0,
         'watchedintervals'     => $progress ? $progress->watchedintervals : '[]',
         'percentcompleted'     => $percentcompleted,
-        'completionminpercent' => (int)$securevideoplayer->completionminpercent,
-        'hascompletionrule'    => (!empty($securevideoplayer->completionminpercent)),
-        'preventseeking'       => !empty($securevideoplayer->preventseeking),
-        'watermarkenabled'     => !empty($securevideoplayer->watermarkenabled),
-        'watermarkopacity'     => (float)($securevideoplayer->watermarkopacity / 100),
+        'completionminpercent' => (int)$securevideo->completionminpercent,
+        'hascompletionrule'    => (!empty($securevideo->completionminpercent)),
+        'preventseeking'       => !empty($securevideo->preventseeking),
+        'watermarkenabled'     => !empty($securevideo->watermarkenabled),
+        'watermarkopacity'     => (float)($securevideo->watermarkopacity / 100),
         'studentname'          => fullname($USER),
         'studentid'            => (int)$USER->id,
         'studentip'            => getremoteaddr(),
         'livetime'             => userdate(time(), get_string('strftimedatetimeshort', 'langconfig')),
     ];
 
-    echo $OUTPUT->render_from_template('mod_securevideoplayer/player', $playerdata);
+    echo $OUTPUT->render_from_template('mod_securevideo/player', $playerdata);
 }
 
 echo $OUTPUT->footer();

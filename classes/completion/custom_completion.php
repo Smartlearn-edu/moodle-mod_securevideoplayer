@@ -14,14 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace mod_securevideoplayer\completion;
+namespace mod_securevideo\completion;
 
 use core_completion\activity_custom_completion;
 
 /**
- * Activity custom completion implementation for mod_securevideoplayer.
+ * Activity custom completion implementation for mod_securevideo.
  *
- * @package    mod_securevideoplayer
+ * @package    mod_securevideo
  * @copyright  2025 Mohammad Nabil <mohammad@smartlearn.education>
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -37,14 +37,14 @@ class custom_completion extends activity_custom_completion {
 
         $this->validate_rule($rule);
 
-        $instance = $DB->get_record('securevideoplayer', ['id' => $this->cm->instance], '*', MUST_EXIST);
+        $instance = $DB->get_record('securevideo', ['id' => $this->cm->instance], '*', MUST_EXIST);
 
         if ($rule === 'completionminpercent') {
             if (empty($instance->completionminpercent)) {
                 return COMPLETION_COMPLETE;
             }
 
-            $progress = $DB->get_record('securevideoplayer_progress', [
+            $progress = $DB->get_record('securevideo_progress', [
                 'instanceid' => $instance->id,
                 'userid'     => $this->userid,
             ]);
@@ -76,12 +76,12 @@ class custom_completion extends activity_custom_completion {
     public function get_custom_rule_descriptions(): array {
         global $DB;
 
-        $instance = $DB->get_record('securevideoplayer', ['id' => $this->cm->instance], '*', MUST_EXIST);
+        $instance = $DB->get_record('securevideo', ['id' => $this->cm->instance], '*', MUST_EXIST);
 
         return [
             'completionminpercent' => get_string(
                 'completionminpercent_desc',
-                'mod_securevideoplayer',
+                'mod_securevideo',
                 $instance->completionminpercent
             ),
         ];
