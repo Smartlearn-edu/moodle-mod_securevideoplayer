@@ -52,12 +52,17 @@ $durationformatted = sprintf('%02d:%02d', $durmins, $dursecs);
 // Enrolled users.
 $users = get_enrolled_users($context, 'mod/securevideo:view', 0, 'u.*', 'u.lastname ASC, u.firstname ASC');
 
+// Completion info.
+$minpercent = (int)($instance->completionminpercent ?? 0);
+$completion = new \completion_info($course);
+$completionenabled = $completion->is_enabled($cm);
+
 // Watch progress records indexed by userid.
 $progressrecords = $DB->get_records(
     'securevideo_progress',
     ['instanceid' => $instance->id],
     '',
-    'userid, watchedseconds, percentcompleted, lastposition, completed, timemodified'
+    'userid, watchedseconds, percentcompleted, lastposition, timemodified'
 );
 
 $studentsdata = [];
@@ -76,7 +81,16 @@ foreach ($users as $user) {
         $percent = (int)$prog->percentcompleted;
         $watchedsec = (int)$prog->watchedseconds;
         $lastpossec = (int)$prog->lastposition;
-        $iscompleted = !empty($prog->completed);
+
+        if ($completionenabled) {
+            $cdata = $completion->get_data($cm, false, $user->id);
+            $iscompleted = ($cdata->completionstate == COMPLETION_COMPLETE ||
+                            $cdata->completionstate == COMPLETION_COMPLETE_PASS);
+        } else if ($minpercent > 0) {
+            $iscompleted = ($percent >= $minpercent);
+        } else {
+            $iscompleted = ($percent >= 100);
+        }
 
         if ($iscompleted) {
             $totalcompleted++;
