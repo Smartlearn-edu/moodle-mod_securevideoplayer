@@ -1,0 +1,56 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_securevideoplayer/picker_card
+
+    Single video item card inside the picker modal.
+}}
+<div class="col">
+    <div class="card h-100 shadow-sm border-0 securevideo-picker-item"
+         data-id="{{id}}"
+         data-title="{{title}}"
+         data-duration="{{durationformatted}}"
+         data-thumbnail="{{thumbnailurl}}">
+        <div class="ratio ratio-16x9 bg-dark rounded-top overflow-hidden position-relative d-flex align-items-center justify-content-center text-white">
+            {{#thumbnailurl}}
+            <img src="{{thumbnailurl}}" alt="{{title}}" class="w-100 h-100 object-fit-cover" style="object-fit: cover;">
+            {{/thumbnailurl}}
+            {{^thumbnailurl}}
+            <i class="fa fa-film fa-2x text-muted" aria-hidden="true"></i>
+            {{/thumbnailurl}}
+            <span class="badge bg-dark bg-opacity-75 position-absolute bottom-0 end-0 m-2">
+                {{durationformatted}}
+            </span>
+        </div>
+        <div class="card-body p-3 d-flex flex-column">
+            <h6 class="card-title text-truncate mb-1" title="{{title}}">{{title}}</h6>
+            <div class="text-muted small mb-2 d-flex justify-content-between">
+                <span><i class="fa fa-user me-1" aria-hidden="true"></i>{{uploaderfullname}}</span>
+                <span><i class="fa fa-hdd-o me-1" aria-hidden="true"></i>{{filesizeformatted}}</span>
+            </div>
+            <div class="mt-auto pt-2 border-top">
+                <button type="button" class="btn btn-sm btn-primary w-100 btn-select-video"
+                        data-id="{{id}}"
+                        data-title="{{title}}"
+                        data-duration="{{durationformatted}}"
+                        data-thumbnail="{{thumbnailurl}}">
+                    <i class="fa fa-check me-1" aria-hidden="true"></i>{{#str}}selectthisvideo, mod_securevideoplayer{{/str}}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

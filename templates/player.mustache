@@ -1,0 +1,176 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_securevideoplayer/player
+
+    Encrypted HLS video player with dynamic canvas watermark and custom controls.
+}}
+<div class="mod-securevideoplayer-wrapper my-3">
+    <div id="secureVideoContainer"
+         class="securevideo-player-container position-relative bg-black rounded shadow-lg overflow-hidden user-select-none"
+         tabindex="0"
+         data-cmid="{{cmid}}"
+         data-playlisturl="{{playlisturl}}"
+         data-duration="{{duration}}"
+         data-lastposition="{{lastposition}}"
+         data-maxposition="{{maxposition}}"
+         data-watchedseconds="{{watchedseconds}}"
+         data-watchedintervals="{{watchedintervals}}"
+         data-percentcompleted="{{percentcompleted}}"
+         data-completionminpercent="{{completionminpercent}}"
+         data-preventseeking="{{#preventseeking}}1{{/preventseeking}}{{^preventseeking}}0{{/preventseeking}}"
+         data-watermarkenabled="{{#watermarkenabled}}1{{/watermarkenabled}}{{^watermarkenabled}}0{{/watermarkenabled}}"
+         data-watermarkopacity="{{watermarkopacity}}"
+         data-studentname="{{studentname}}"
+         data-studentid="{{studentid}}"
+         data-studentip="{{studentip}}"
+         data-livetime="{{livetime}}">
+
+        {{! Native video element (Blob via MSE) }}
+        <div class="ratio ratio-16x9 position-relative bg-black">
+            <video id="secureVideoElement"
+                   class="w-100 h-100"
+                   playsinline
+                   preload="auto"
+                   poster="{{thumbnailurl}}"
+                   controlslist="nodownload noplaybackrate"
+                   disablepictureinpicture="true"
+                   oncontextmenu="return false;">
+            </video>
+
+            {{! Dynamic moving canvas watermark overlay }}
+            {{#watermarkenabled}}
+            <canvas id="secureVideoWatermarkCanvas"
+                    class="securevideo-watermark-canvas position-absolute top-0 start-0 w-100 h-100"
+                    style="pointer-events: none; z-index: 15;">
+            </canvas>
+            {{/watermarkenabled}}
+
+            {{! Center big play/pause button overlay }}
+            <div class="securevideo-center-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center cursor-pointer"
+                 style="z-index: 10;">
+                <button type="button" class="btn btn-dark bg-opacity-50 text-white rounded-circle p-3 securevideo-btn-bigplay" aria-label="{{#str}}play, mod_securevideoplayer{{/str}}">
+                    <i class="fa fa-play fa-2x" aria-hidden="true"></i>
+                </button>
+            </div>
+
+            {{! Resume Playback Toast }}
+            {{#hasresume}}
+            <div id="secureVideoResumeToast"
+                 class="securevideo-resume-toast position-absolute top-0 start-50 translate-middle-x mt-3 bg-dark bg-opacity-90 text-white px-3 py-2 rounded shadow d-flex align-items-center gap-2 border border-secondary"
+                 style="z-index: 25;">
+                <i class="fa fa-history text-info" aria-hidden="true"></i>
+                <span class="small">{{#str}}resumeprompt, mod_securevideoplayer, {{lastposformatted}}{{/str}}</span>
+                <button type="button" class="btn btn-sm btn-primary py-0 px-2 btn-action-resume">{{#str}}resume, mod_securevideoplayer{{/str}}</button>
+                <button type="button" class="btn btn-sm btn-outline-light py-0 px-2 btn-action-dismiss">{{#str}}startover, mod_securevideoplayer{{/str}}</button>
+            </div>
+            {{/hasresume}}
+
+            {{! Seeking locked notification }}
+            <div id="secureVideoSeekNotice"
+                 class="securevideo-seek-notice position-absolute top-50 start-50 translate-middle bg-dark bg-opacity-90 text-white px-3 py-2 rounded shadow d-none"
+                 style="z-index: 20;">
+                <i class="fa fa-lock text-warning me-1" aria-hidden="true"></i>
+                <span>{{#str}}seekinglocked, mod_securevideoplayer{{/str}}</span>
+            </div>
+        </div>
+
+        {{! Custom Controls Bar }}
+        <div class="securevideo-controls-bar bg-dark bg-opacity-95 text-white p-2" style="z-index: 30;">
+            {{! Scrubber / Timeline }}
+            <div class="securevideo-timeline-wrapper position-relative py-1 cursor-pointer">
+                <div class="securevideo-timeline-track bg-secondary rounded position-relative" style="height: 6px;">
+                    <div class="securevideo-buffered-bar bg-light bg-opacity-25 rounded position-absolute top-0 start-0 h-100" style="width: 0%;"></div>
+                    <div class="securevideo-progress-bar bg-primary rounded position-absolute top-0 start-0 h-100" style="width: 0%;"></div>
+                    {{#preventseeking}}
+                    <div class="securevideo-max-marker position-absolute top-0 h-100 bg-warning" style="width: 3px; left: 0%;" title="{{#str}}preventseeking, mod_securevideoplayer{{/str}}"></div>
+                    {{/preventseeking}}
+                </div>
+            </div>
+
+            {{! Button Row }}
+            <div class="d-flex justify-content-between align-items-center mt-1">
+                {{! Left: Play, Volume, Time }}
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-link text-white p-1 securevideo-btn-play" title="{{#str}}play, mod_securevideoplayer{{/str}}">
+                        <i class="fa fa-play" aria-hidden="true"></i>
+                    </button>
+
+                    <div class="d-flex align-items-center gap-1 securevideo-volume-group">
+                        <button type="button" class="btn btn-link text-white p-1 securevideo-btn-mute" title="{{#str}}mute, mod_securevideoplayer{{/str}}">
+                            <i class="fa fa-volume-up" aria-hidden="true"></i>
+                        </button>
+                        <input type="range" class="form-range securevideo-volume-slider" min="0" max="1" step="0.05" value="1" style="width: 70px;">
+                    </div>
+
+                    <span class="securevideo-time-display text-muted small ms-1">
+                        <span class="securevideo-current-time text-white">00:00</span> / <span class="securevideo-total-duration">{{durationformatted}}</span>
+                    </span>
+                </div>
+
+                {{! Right: Progress pill, Speed, Quality, Fullscreen }}
+                <div class="d-flex align-items-center gap-2">
+                    {{#hascompletionrule}}
+                    <span class="badge bg-secondary securevideo-progress-badge small" title="{{#str}}completionminpercent_desc, mod_securevideoplayer, {{completionminpercent}}{{/str}}">
+                        {{#str}}watchprogress, mod_securevideoplayer, {"percent": {{percentcompleted}}, "min": {{completionminpercent}}}{{/str}}
+                    </span>
+                    {{/hascompletionrule}}
+                    {{^hascompletionrule}}
+                    <span class="badge bg-secondary securevideo-progress-badge small">
+                        {{#str}}watchprogress_no_min, mod_securevideoplayer, {{percentcompleted}}{{/str}}
+                    </span>
+                    {{/hascompletionrule}}
+
+                    {{! Speed Dropdown }}
+                    <div class="dropdown">
+                        <button type="button" class="btn btn-sm btn-link text-white text-decoration-none dropdown-toggle p-1" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="securevideo-current-speed">1x</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end securevideo-speed-menu">
+                            <li><button type="button" class="dropdown-item" data-speed="0.75">0.75x</button></li>
+                            <li><button type="button" class="dropdown-item active" data-speed="1">1x (Normal)</button></li>
+                            <li><button type="button" class="dropdown-item" data-speed="1.25">1.25x</button></li>
+                            <li><button type="button" class="dropdown-item" data-speed="1.5">1.5x</button></li>
+                            <li><button type="button" class="dropdown-item" data-speed="2">2x</button></li>
+                        </ul>
+                    </div>
+
+                    {{! Quality Dropdown }}
+                    <div class="dropdown securevideo-quality-container d-none">
+                        <button type="button" class="btn btn-sm btn-link text-white text-decoration-none dropdown-toggle p-1" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa fa-cog me-1" aria-hidden="true"></i><span class="securevideo-current-quality">Auto</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end securevideo-quality-menu">
+                            <li><button type="button" class="dropdown-item active" data-level="-1">{{#str}}auto, mod_securevideoplayer{{/str}}</button></li>
+                        </ul>
+                    </div>
+
+                    {{! Fullscreen Toggle }}
+                    <button type="button" class="btn btn-link text-white p-1 securevideo-btn-fullscreen" title="{{#str}}fullscreen, mod_securevideoplayer{{/str}}">
+                        <i class="fa fa-expand" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{#js}}
+require(['mod_securevideoplayer/player'], function(player) {
+    player.init('secureVideoContainer');
+});
+{{/js}}
