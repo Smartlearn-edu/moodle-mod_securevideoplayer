@@ -750,6 +750,7 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             submitBtn.disabled = true;
 
             overlay.classList.remove('d-none');
+            overlay.classList.add('d-flex');
 
             Ajax.call([{
                 methodname: 'mod_securevideo_get_question_attempt',
@@ -856,6 +857,7 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
                         );
 
                         setTimeout(function() {
+                            overlay.classList.remove('d-flex');
                             overlay.classList.add('d-none');
                             self.activeQuestion = null;
                             self.video.currentTime = Math.max(0, q.timecode - res.rewind_seconds);
@@ -878,6 +880,7 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
          */
         continuePlayback: function() {
             if (this.questionOverlay) {
+                this.questionOverlay.classList.remove('d-flex');
                 this.questionOverlay.classList.add('d-none');
             }
             const q = this.activeQuestion;

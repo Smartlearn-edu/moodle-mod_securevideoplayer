@@ -324,6 +324,7 @@ define(['core/ajax', 'core/notification', 'core/str'], function(Ajax, Notificati
          */
         openModalForAdd: function(initialTimecode) {
             document.getElementById('cueId').value = '0';
+            document.getElementById('cueQid').value = '0';
             document.getElementById('cueQbeId').value = '0';
             document.getElementById('cueTimecode').value = formatTime(parseTime(initialTimecode));
             document.getElementById('cueTitle').value = '';
@@ -367,6 +368,7 @@ define(['core/ajax', 'core/notification', 'core/str'], function(Ajax, Notificati
             const rewind = row.dataset.rewind || '0';
 
             document.getElementById('cueId').value = cueId;
+            document.getElementById('cueQid').value = qid;
             document.getElementById('cueQbeId').value = qbeId;
             document.getElementById('cueTimecode').value = formatTime(timecode);
             document.getElementById('cueTitle').value = title;
@@ -390,16 +392,31 @@ define(['core/ajax', 'core/notification', 'core/str'], function(Ajax, Notificati
         saveCuepoint: function() {
             const self = this;
             const cueId = parseInt(document.getElementById('cueId').value, 10) || 0;
-            const qbeId = parseInt(document.getElementById('cueQbeId').value, 10) || 0;
+            let qbeId = parseInt(document.getElementById('cueQbeId').value, 10) || 0;
             const qSelect = document.getElementById('cueQuestionSelect');
-            const qid = parseInt(qSelect.value, 10) || 0;
+            let qid = parseInt(qSelect.value, 10) || 0;
+            if (qid <= 0) {
+                qid = parseInt(document.getElementById('cueQid').value, 10) || 0;
+            }
+            if (qbeId <= 0 && qSelect.selectedOptions && qSelect.selectedOptions[0]) {
+                qbeId = parseInt(qSelect.selectedOptions[0].dataset.qbeid, 10) || 0;
+            }
             const timecode = parseTime(document.getElementById('cueTimecode').value);
             const title = document.getElementById('cueTitle').value.trim();
             const requireCorrect = document.getElementById('cueRequireCorrect').checked ? 1 : 0;
             const rewindOnFail = parseInt(document.getElementById('cueRewindOnFail').value, 10) || 0;
 
-            if (qid <= 0 && cueId <= 0) {
+            if (qid <= 0 && qbeId <= 0 && cueId <= 0) {
                 Notification.alert('Error', 'Please select a question from the Question Bank.', 'OK');
+                return;
+            }
+
+            if (self.duration > 0 && timecode > self.duration) {
+                Notification.alert(
+                    'Invalid Timestamp',
+                    'Timestamp cannot exceed video duration (' + formatTime(self.duration) + ').',
+                    'OK'
+                );
                 return;
             }
 

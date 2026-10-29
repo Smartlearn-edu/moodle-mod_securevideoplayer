@@ -80,7 +80,15 @@ foreach ($questions as $q) {
     $qtype = '';
     $snippet = '';
 
-    $qrecord = $DB->get_record('question', ['id' => $q->questionid]);
+    $qid = (int)$q->questionid;
+    if ($qid <= 0 && !empty($q->questionbankentryid)) {
+        $qid = \mod_securevideo\question_helper::get_latest_question_id((int)$q->questionbankentryid, 0);
+        if ($qid > 0) {
+            $DB->set_field('securevideo_questions', 'questionid', $qid, ['id' => $q->id]);
+        }
+    }
+
+    $qrecord = ($qid > 0) ? $DB->get_record('question', ['id' => $qid]) : false;
     if ($qrecord) {
         $qname = format_string($qrecord->name);
         $qtype = $qrecord->qtype;

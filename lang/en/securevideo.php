@@ -132,6 +132,7 @@ $string['rewind_none'] = '0 seconds (allow retry in place)';
 $string['rewind_seconds'] = '{$a} seconds';
 $string['noquestionsconfigured'] = 'No interactive questions have been added to this video yet.';
 $string['noquestionsincategory'] = 'No ready questions found in this category.';
+$string['invalidquestion'] = 'Invalid or missing question from the Question Bank.';
 $string['jumpto'] = 'Jump to';
 $string['savecuepoint'] = 'Save Question';
 $string['questioncount'] = 'Questions: {$a}';

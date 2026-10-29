@@ -91,7 +91,7 @@
 
             {{! Interactive Question Overlay - inside player container for seamless fullscreen }}
             <div id="secureVideoQuestionOverlay"
-                 class="securevideo-question-overlay position-absolute top-0 start-0 w-100 h-100 d-none d-flex align-items-center justify-content-center p-3"
+                 class="securevideo-question-overlay position-absolute top-0 start-0 w-100 h-100 d-none align-items-center justify-content-center p-3"
                  style="z-index: 40; background-color: rgba(0, 0, 0, 0.78);">
                 <div class="securevideo-question-card card shadow-lg border-0 bg-white text-dark rounded-3 overflow-hidden"
                      style="width: 100%; max-width: 660px; max-height: 90%; display: flex; flex-direction: column;">
@@ -233,3 +233,9 @@
         </div>
     </div>
 </div>
+
+{{#js}}
+require(['mod_securevideo/player'], function(Player) {
+    Player.init('secureVideoContainer');
+});
+{{/js}}

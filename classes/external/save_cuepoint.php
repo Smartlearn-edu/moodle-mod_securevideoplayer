@@ -98,28 +98,63 @@ class save_cuepoint extends external_api {
 
         $instance = $DB->get_record('securevideo', ['id' => $cm->instance], '*', MUST_EXIST);
 
-        // Resolve question bank entry ID if missing.
         $qbeid = $params['questionbankentryid'];
-        if ($qbeid <= 0 && $params['questionid'] > 0) {
-            $qbeid = (int)$DB->get_field_sql(
-                "SELECT qv.questionbankentryid
-                   FROM {question_versions} qv
-                  WHERE qv.questionid = :qid",
-                ['qid' => $params['questionid']],
-                IGNORE_MULTIPLE
-            );
-        }
+        $qid   = $params['questionid'];
 
-        $now = time();
         if ($params['cueid'] > 0) {
             $cue = $DB->get_record('securevideo_questions', [
                 'id'         => $params['cueid'],
                 'instanceid' => $instance->id,
             ], '*', MUST_EXIST);
 
+            if ($qid <= 0) {
+                $qid = (int)$cue->questionid;
+            }
+            if ($qbeid <= 0) {
+                $qbeid = (int)$cue->questionbankentryid;
+            }
+        }
+
+        // Resolve question bank entry ID if missing.
+        if ($qbeid <= 0 && $qid > 0) {
+            $qbeid = (int)$DB->get_field_sql(
+                "SELECT qv.questionbankentryid
+                   FROM {question_versions} qv
+                  WHERE qv.questionid = :qid",
+                ['qid' => $qid],
+                IGNORE_MULTIPLE
+            );
+        }
+
+        // Resolve question ID if missing.
+        if ($qid <= 0 && $qbeid > 0) {
+            $qid = (int)$DB->get_field_sql(
+                "SELECT qv.questionid
+                   FROM {question_versions} qv
+                  WHERE qv.questionbankentryid = :qbeid
+               ORDER BY qv.version DESC",
+                ['qbeid' => $qbeid],
+                IGNORE_MULTIPLE
+            );
+        }
+
+        if ($qid <= 0) {
+            throw new \moodle_exception('invalidquestion', 'mod_securevideo');
+        }
+
+        $timecode = max(0, $params['timecode']);
+        if (!empty($instance->mediaid)) {
+            $duration = (int)$DB->get_field('local_securevideolibrary_media', 'duration', ['id' => $instance->mediaid]);
+            if ($duration > 0 && $timecode > $duration) {
+                $timecode = $duration;
+            }
+        }
+
+        $now = time();
+        if ($params['cueid'] > 0) {
             $cue->questionbankentryid = $qbeid;
-            $cue->questionid          = $params['questionid'];
-            $cue->timecode            = max(0, $params['timecode']);
+            $cue->questionid          = $qid;
+            $cue->timecode            = $timecode;
             $cue->title               = $params['title'];
             $cue->requirecorrect      = !empty($params['requirecorrect']) ? 1 : 0;
             $cue->rewindonfail        = max(0, $params['rewindonfail']);
@@ -131,8 +166,8 @@ class save_cuepoint extends external_api {
             $cue = new stdClass();
             $cue->instanceid          = $instance->id;
             $cue->questionbankentryid = $qbeid;
-            $cue->questionid          = $params['questionid'];
-            $cue->timecode            = max(0, $params['timecode']);
+            $cue->questionid          = $qid;
+            $cue->timecode            = $timecode;
             $cue->title               = $params['title'];
             $cue->requirecorrect      = !empty($params['requirecorrect']) ? 1 : 0;
             $cue->rewindonfail        = max(0, $params['rewindonfail']);

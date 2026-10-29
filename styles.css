@@ -107,6 +107,10 @@
     animation: securevideoFadeIn 0.2s ease-out;
 }
 
+.securevideo-question-overlay.d-none {
+    display: none !important;
+}
+
 @keyframes securevideoFadeIn {
     from {
         opacity: 0;

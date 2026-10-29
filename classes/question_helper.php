@@ -210,6 +210,12 @@ class question_helper {
 
         if (!$attempt || $forcenew) {
             $latestqid = self::get_latest_question_id((int)$cue->questionbankentryid, (int)$cue->questionid);
+            if ($latestqid <= 0) {
+                throw new \moodle_exception('invalidquestion', 'mod_securevideo');
+            }
+            if ($cue->questionid <= 0) {
+                $DB->set_field('securevideo_questions', 'questionid', $latestqid, ['id' => $cue->id]);
+            }
             $question = question_bank::load_question($latestqid);
 
             $quba = question_engine::make_questions_usage_by_activity('mod_securevideo', $context);
