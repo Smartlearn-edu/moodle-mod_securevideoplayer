@@ -30,5 +30,5 @@ $plugin->requires  = 2024100700; // Requires Moodle 5.0+.
 $plugin->maturity  = MATURITY_ALPHA;
 $plugin->release   = 'v1.0.0';
 $plugin->dependencies = [
-    'local_securevideolibrary' => 2026102806,
+    'local_securevideolibrary' => 2026102901,
 ];
