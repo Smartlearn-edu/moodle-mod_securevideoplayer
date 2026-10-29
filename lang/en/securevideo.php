@@ -101,6 +101,7 @@ $string['completed'] = 'Completed';
 $string['in_progress'] = 'In Progress';
 $string['notstarted'] = 'Not Started';
 $string['backtovideo'] = 'Back to Video';
+$string['lastupdated'] = 'Last Updated';
 $string['nostudentsfound'] = 'No enrolled students found in this course.';
 
 // Privacy API.
