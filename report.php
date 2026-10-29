@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Watch progress report for mod_securevideo.
+ * Watch Progress Report for mod_securevideo.
  *
  * @package    mod_securevideo
  * @copyright  2025 Mohammad Nabil <mohammad@smartlearn.education>
@@ -23,28 +23,30 @@
  */
 
 require_once(__DIR__ . '/../../config.php');
+require_once(__DIR__ . '/lib.php');
 
-$id = required_param('id', PARAM_INT); // Course Module ID.
-
-[$course, $cm] = get_course_and_cm_from_cmid($id, 'securevideo');
+$id = required_param('id', PARAM_INT);
+$cm = get_coursemodule_from_id('securevideo', $id, 0, false, MUST_EXIST);
+$course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
 $instance = $DB->get_record('securevideo', ['id' => $cm->instance], '*', MUST_EXIST);
 
-require_login($course, true, $cm);
+require_login($course, false, $cm);
 $context = context_module::instance($cm->id);
 require_capability('mod/securevideo:viewreports', $context);
 
-$PAGE->set_url('/mod/securevideo/report.php', ['id' => $cm->id]);
-$PAGE->set_title(format_string($instance->name) . ': ' . get_string('report', 'mod_securevideo'));
-$PAGE->set_heading(format_string($course->fullname));
-$PAGE->set_pagelayout('incourse');
+$pageurl = new moodle_url('/mod/securevideo/report.php', ['id' => $cm->id]);
+$PAGE->set_url($pageurl);
+$PAGE->set_title(get_string('report', 'mod_securevideo') . ': ' . $instance->name);
+$PAGE->set_heading($course->fullname);
+$PAGE->set_context($context);
 
-// Video details.
+// Fetch linked media record.
 $media = null;
 if (!empty($instance->mediaid)) {
     $media = $DB->get_record('local_securevideolibrary_media', ['id' => $instance->mediaid]);
 }
 
-$duration = (int)($media->duration ?? 0);
+$duration = $media ? (int)$media->duration : 0;
 $durmins = floor($duration / 60);
 $dursecs = $duration % 60;
 $durationformatted = sprintf('%02d:%02d', $durmins, $dursecs);
@@ -56,6 +58,24 @@ $users = get_enrolled_users($context, 'mod/securevideo:view', 0, 'u.*', 'u.lastn
 $minpercent = (int)($instance->completionminpercent ?? 0);
 $completion = new \completion_info($course);
 $completionenabled = $completion->is_enabled($cm);
+
+// Total interactive questions configured.
+$totalquestions = $DB->count_records('securevideo_questions', ['instanceid' => $instance->id]);
+
+// Count passed questions per user.
+$passedbyuser = [];
+if ($totalquestions > 0) {
+    $passedrecords = $DB->get_records_sql(
+        "SELECT userid, COUNT(id) AS passedcount
+           FROM {securevideo_qattempts}
+          WHERE instanceid = :instanceid AND passed = 1
+       GROUP BY userid",
+        ['instanceid' => $instance->id]
+    );
+    foreach ($passedrecords as $pr) {
+        $passedbyuser[$pr->userid] = (int)$pr->passedcount;
+    }
+}
 
 // Watch progress records indexed by userid.
 $progressrecords = $DB->get_records(
@@ -119,34 +139,54 @@ foreach ($users as $user) {
 
     $totalpercent += $percent;
 
+    // Interactive questions summary.
+    $questionssummary = '-';
+    $qstatusclass = '';
+    if ($totalquestions > 0) {
+        $passedcount = $passedbyuser[$user->id] ?? 0;
+        $qratio = round(($passedcount / $totalquestions) * 100);
+        $questionssummary = $passedcount . ' / ' . $totalquestions . ' (' . $qratio . '%)';
+        if ($passedcount >= $totalquestions) {
+            $qstatusclass = 'badge bg-success-subtle text-success border border-success-subtle';
+        } else if ($passedcount > 0) {
+            $qstatusclass = 'badge bg-warning-subtle text-warning-emphasis border border-warning-subtle';
+        } else {
+            $qstatusclass = 'badge bg-secondary-subtle text-secondary border border-secondary-subtle';
+        }
+    }
+
     $studentsdata[] = [
-        'userid' => $user->id,
-        'userfullname' => $userfullname,
-        'useremail' => $user->email,
-        'userpicture' => $userpicture,
-        'userprofileurl' => $userprofileurl,
-        'percent' => $percent,
+        'userid'           => $user->id,
+        'userfullname'     => $userfullname,
+        'useremail'        => $user->email,
+        'userpicture'      => $userpicture,
+        'userprofileurl'   => $userprofileurl,
+        'percent'          => $percent,
         'watchedformatted' => $watchedformatted,
         'lastposformatted' => $lastposformatted,
-        'statusclass' => $statusclass,
-        'statustext' => $statustext,
-        'lastupdated' => $lastupdated,
+        'statusclass'      => $statusclass,
+        'statustext'       => $statustext,
+        'lastupdated'      => $lastupdated,
+        'hasquestions'     => ($totalquestions > 0),
+        'questionssummary' => $questionssummary,
+        'qstatusclass'     => $qstatusclass,
     ];
 }
 
 $avgpercent = $totalenrolled > 0 ? (int)round($totalpercent / $totalenrolled) : 0;
 
 $data = [
-    'instancename' => format_string($instance->name),
-    'videotitle' => $media ? format_string($media->title) : '',
-    'durationformatted' => $durationformatted,
-    'totalenrolled' => $totalenrolled,
-    'totalcompleted' => $totalcompleted,
-    'avgpercent' => $avgpercent,
-    'hasstudents' => !empty($studentsdata),
-    'students' => $studentsdata,
-    'backurl' => (new moodle_url('/mod/securevideo/view.php', ['id' => $cm->id]))->out(false),
+    'instancename'         => format_string($instance->name),
+    'videotitle'           => $media ? format_string($media->title) : '',
+    'durationformatted'    => $durationformatted,
+    'totalenrolled'        => $totalenrolled,
+    'totalcompleted'       => $totalcompleted,
+    'avgpercent'           => $avgpercent,
+    'hasstudents'          => !empty($studentsdata),
+    'students'             => $studentsdata,
+    'backurl'              => (new moodle_url('/mod/securevideo/view.php', ['id' => $cm->id]))->out(false),
     'completionminpercent' => (int)($instance->completionminpercent ?? 0),
+    'hasactivityquestions' => ($totalquestions > 0),
 ];
 
 echo $OUTPUT->header();

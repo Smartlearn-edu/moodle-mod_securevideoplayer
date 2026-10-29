@@ -104,6 +104,60 @@ $string['backtovideo'] = 'Back to Video';
 $string['lastupdated'] = 'Last Updated';
 $string['nostudentsfound'] = 'No enrolled students found in this course.';
 
+// Interactive Questions & Question Bank Integration.
+$string['interactivequestions'] = 'Interactive Questions';
+$string['questions'] = 'Interactive Questions';
+$string['managequestions'] = 'Manage Interactive Questions';
+$string['managequestions_desc'] = 'Add questions from your course Question Bank to pause the video at specific timestamps and verify student comprehension.';
+$string['addquestion'] = 'Add Question';
+$string['addquestionat'] = 'Add Question at {$a}';
+$string['editquestion'] = 'Edit Question';
+$string['deletequestion'] = 'Delete Question';
+$string['deletequestionconfirm'] = 'Are you sure you want to remove this interactive question from the video? Student attempts for this question will also be removed.';
+$string['timecode'] = 'Timestamp (seconds or MM:SS)';
+$string['timecode_help'] = 'The exact playback position where the video will pause and display this question.';
+$string['questiontitle'] = 'Label / Title';
+$string['questiontitle_default'] = 'Knowledge Check';
+$string['questionbank'] = 'Question Bank';
+$string['questioncategory'] = 'Question Category';
+$string['choosecategory'] = 'Choose a category...';
+$string['selectquestion'] = 'Select Question';
+$string['choosequestion'] = 'Choose a question...';
+$string['questionpreview'] = 'Question Preview';
+$string['requirecorrect'] = 'Require correct answer to continue';
+$string['requirecorrect_help'] = 'If enabled, the video will remain paused until the student answers the question correctly.';
+$string['rewindonfail'] = 'Rewind on incorrect answer';
+$string['rewindonfail_help'] = 'Number of seconds to rewind the video if the student answers incorrectly, encouraging them to review the explanation. Choose 0 to allow immediate retries in place.';
+$string['rewind_none'] = '0 seconds (allow retry in place)';
+$string['rewind_seconds'] = '{$a} seconds';
+$string['noquestionsconfigured'] = 'No interactive questions have been added to this video yet.';
+$string['noquestionsincategory'] = 'No ready questions found in this category.';
+$string['jumpto'] = 'Jump to';
+$string['savecuepoint'] = 'Save Question';
+$string['questioncount'] = 'Questions: {$a}';
+$string['completionrequirequestions'] = 'Require all interactive questions passed';
+$string['completionrequirequestions_help'] = 'If enabled, the activity is only marked complete once the student has correctly answered all interactive questions.';
+$string['completionrequirequestions_desc'] = 'Student must pass all {$a} interactive questions';
+
+// Player In-Video Question Overlay Strings.
+$string['knowledgecheck'] = 'Knowledge Check';
+$string['submitanswer'] = 'Submit Answer';
+$string['submitting'] = 'Submitting...';
+$string['answercorrect'] = 'Correct! Great job.';
+$string['answerincorrect'] = 'Incorrect. Please try again.';
+$string['continuevideo'] = 'Continue Video';
+$string['tryagain'] = 'Try Again';
+$string['rewindingnotice'] = 'Incorrect answer. Rewinding {$a} seconds to review the explanation...';
+$string['questionpassed'] = 'Completed';
+$string['questionpending'] = 'Pending';
+$string['questionsprogress'] = 'Questions: {$a->passed}/{$a->total} passed';
+$string['questiongateactive'] = 'You must answer the interactive question before proceeding.';
+
+// Report strings.
+$string['interactivequestionscol'] = 'Questions Passed';
+$string['interactivequestions_summary'] = 'Passed {$a->passed} of {$a->total} ({$a->percent}%)';
+$string['noquestionsactivity'] = 'No interactive questions';
+
 // Privacy API.
 $string['privacy:metadata:securevideo_progress'] = 'Stores watch progress, bookmarks, and completion tracking for each student.';
 $string['privacy:metadata:securevideo_progress:userid'] = 'The user ID of the student.';
@@ -112,3 +166,11 @@ $string['privacy:metadata:securevideo_progress:maxposition'] = 'The furthest pos
 $string['privacy:metadata:securevideo_progress:watchedseconds'] = 'Total unique seconds watched across sessions.';
 $string['privacy:metadata:securevideo_progress:percentcompleted'] = 'Calculated percentage of video watched.';
 $string['privacy:metadata:securevideo_progress:timemodified'] = 'The timestamp when progress was last recorded.';
+$string['privacy:metadata:securevideo_qattempts'] = 'Stores student attempts, scores, and pass status for in-video interactive questions.';
+$string['privacy:metadata:securevideo_qattempts:userid'] = 'The ID of the student answering the question.';
+$string['privacy:metadata:securevideo_qattempts:svquestionid'] = 'The ID of the interactive question cuepoint.';
+$string['privacy:metadata:securevideo_qattempts:passed'] = 'Whether the student answered the question correctly.';
+$string['privacy:metadata:securevideo_qattempts:attempts'] = 'The number of attempts made by the student.';
+$string['privacy:metadata:securevideo_qattempts:fraction'] = 'The score fraction obtained from the question engine.';
+$string['privacy:metadata:securevideo_qattempts:timemodified'] = 'The timestamp of the last attempt interaction.';
+$string['privacy:metadata:core_question'] = 'The Secure Video activity uses Moodle\'s Question Engine subsystem to evaluate and store interactive question attempts.';

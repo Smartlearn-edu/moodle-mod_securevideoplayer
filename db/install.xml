@@ -16,6 +16,7 @@
         <FIELD NAME="watermarkopacity" TYPE="int" LENGTH="3" NOTNULL="true" DEFAULT="35" SEQUENCE="false" COMMENT="Watermark opacity percent (10-100)"/>
         <FIELD NAME="preventseeking" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="1 if forward seeking is locked past max watched position"/>
         <FIELD NAME="completionminpercent" TYPE="int" LENGTH="3" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Minimum watch percentage required for completion"/>
+        <FIELD NAME="completionrequirequestions" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="1 if student must pass all interactive questions for completion"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
@@ -46,6 +47,51 @@
       <INDEXES>
         <INDEX NAME="instanceid_userid_idx" UNIQUE="true" FIELDS="instanceid, userid"/>
         <INDEX NAME="userid_idx" UNIQUE="false" FIELDS="userid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="securevideo_questions" COMMENT="Interactive question cuepoints configured on video timeline">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="instanceid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="FK to securevideo.id"/>
+        <FIELD NAME="questionbankentryid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="FK to question_bank_entries.id"/>
+        <FIELD NAME="questionid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="FK to question.id"/>
+        <FIELD NAME="timecode" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Playback timestamp in seconds where video pauses"/>
+        <FIELD NAME="title" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Optional title or label for the cuepoint"/>
+        <FIELD NAME="requirecorrect" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="1 if student must pass to resume video, 0 if informational"/>
+        <FIELD NAME="rewindonfail" TYPE="int" LENGTH="5" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Seconds to rewind on failure, 0 for retry on spot"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="instanceid_fk" TYPE="foreign" FIELDS="instanceid" REFTABLE="securevideo" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="instanceid_idx" UNIQUE="false" FIELDS="instanceid"/>
+        <INDEX NAME="instanceid_timecode_idx" UNIQUE="false" FIELDS="instanceid, timecode"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="securevideo_qattempts" COMMENT="Tracks student attempts and pass status for in-video questions">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="instanceid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="FK to securevideo.id"/>
+        <FIELD NAME="svquestionid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="FK to securevideo_questions.id"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="User ID"/>
+        <FIELD NAME="qubaid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="FK to question_usages.id"/>
+        <FIELD NAME="slot" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Slot number in quba"/>
+        <FIELD NAME="passed" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="1 if question answered correctly, 0 otherwise"/>
+        <FIELD NAME="attempts" TYPE="int" LENGTH="5" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Number of attempts taken"/>
+        <FIELD NAME="fraction" TYPE="number" LENGTH="12" NOTNULL="false" SEQUENCE="false" DECIMALS="7" COMMENT="Score fraction from question engine"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="instanceid_fk" TYPE="foreign" FIELDS="instanceid" REFTABLE="securevideo" REFFIELDS="id"/>
+        <KEY NAME="svquestionid_fk" TYPE="foreign" FIELDS="svquestionid" REFTABLE="securevideo_questions" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="svquestionid_userid_idx" UNIQUE="true" FIELDS="svquestionid, userid"/>
+        <INDEX NAME="instanceid_userid_idx" UNIQUE="false" FIELDS="instanceid, userid"/>
       </INDEXES>
     </TABLE>
   </TABLES>

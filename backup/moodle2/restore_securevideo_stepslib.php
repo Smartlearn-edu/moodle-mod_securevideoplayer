@@ -35,6 +35,7 @@ class restore_securevideo_activity_structure_step extends restore_activity_struc
     protected function define_structure(): array {
         $paths = [];
         $paths[] = new restore_path_element('securevideo', '/activity/securevideo');
+        $paths[] = new restore_path_element('securevideo_question', '/activity/securevideo/questions/question');
 
         return $this->prepare_activity_structure($paths);
     }
@@ -53,6 +54,27 @@ class restore_securevideo_activity_structure_step extends restore_activity_struc
 
         $newitemid = $DB->insert_record('securevideo', $data);
         $this->apply_activity_instance($newitemid);
+    }
+
+    /**
+     * Process a question cuepoint restore element.
+     *
+     * @param array $data
+     * @return void
+     */
+    protected function process_securevideo_question(array $data): void {
+        global $DB;
+
+        $data = (object)$data;
+        $data->instanceid = $this->get_new_parentid('securevideo');
+
+        // Remap question ID if question was restored or exists.
+        $newquestionid = $this->get_mappingid('question', $data->questionid);
+        if ($newquestionid) {
+            $data->questionid = $newquestionid;
+        }
+
+        $DB->insert_record('securevideo_questions', $data);
     }
 
     /**

@@ -24,6 +24,8 @@ use core_privacy\local\request\approved_userlist;
 use core_privacy\local\request\writer;
 use core_privacy\local\request\transform;
 use context_module;
+use question_engine;
+use qubaid_list;
 
 /**
  * Privacy API provider for mod_securevideo.
@@ -56,6 +58,21 @@ class provider implements
             'privacy:metadata:securevideo_progress'
         );
 
+        $collection->add_database_table(
+            'securevideo_qattempts',
+            [
+                'userid'        => 'privacy:metadata:securevideo_qattempts:userid',
+                'svquestionid'  => 'privacy:metadata:securevideo_qattempts:svquestionid',
+                'passed'        => 'privacy:metadata:securevideo_qattempts:passed',
+                'attempts'      => 'privacy:metadata:securevideo_qattempts:attempts',
+                'fraction'      => 'privacy:metadata:securevideo_qattempts:fraction',
+                'timemodified'  => 'privacy:metadata:securevideo_qattempts:timemodified',
+            ],
+            'privacy:metadata:securevideo_qattempts'
+        );
+
+        $collection->link_subsystem('core_question', 'privacy:metadata:core_question');
+
         return $collection;
     }
 
@@ -72,10 +89,15 @@ class provider implements
                   FROM {course_modules} cm
                   JOIN {modules} m ON m.id = cm.module AND m.name = :modname
                   JOIN {securevideo} p ON p.id = cm.instance
-                  JOIN {securevideo_progress} prog ON prog.instanceid = p.id
-                 WHERE prog.userid = :userid";
+             LEFT JOIN {securevideo_progress} prog ON prog.instanceid = p.id AND prog.userid = :userid1
+             LEFT JOIN {securevideo_qattempts} qatt ON qatt.instanceid = p.id AND qatt.userid = :userid2
+                 WHERE prog.id IS NOT NULL OR qatt.id IS NOT NULL";
 
-        $contextlist->add_from_sql($sql, ['modname' => 'securevideo', 'userid' => $userid]);
+        $contextlist->add_from_sql($sql, [
+            'modname' => 'securevideo',
+            'userid1' => $userid,
+            'userid2' => $userid,
+        ]);
 
         return $contextlist;
     }
@@ -93,14 +115,26 @@ class provider implements
             return;
         }
 
-        $sql = "SELECT prog.userid
-                  FROM {course_modules} cm
-                  JOIN {modules} m ON m.id = cm.module AND m.name = :modname
-                  JOIN {securevideo} p ON p.id = cm.instance
-                  JOIN {securevideo_progress} prog ON prog.instanceid = p.id
-                 WHERE cm.id = :cmid";
+        $sqlprog = "SELECT prog.userid
+                      FROM {course_modules} cm
+                      JOIN {modules} m ON m.id = cm.module AND m.name = :modname
+                      JOIN {securevideo} p ON p.id = cm.instance
+                      JOIN {securevideo_progress} prog ON prog.instanceid = p.id
+                     WHERE cm.id = :cmid";
 
-        $userlist->add_from_sql('userid', $sql, [
+        $userlist->add_from_sql('userid', $sqlprog, [
+            'modname' => 'securevideo',
+            'cmid'    => $context->instanceid,
+        ]);
+
+        $sqlq = "SELECT qatt.userid
+                   FROM {course_modules} cm
+                   JOIN {modules} m ON m.id = cm.module AND m.name = :modname
+                   JOIN {securevideo} p ON p.id = cm.instance
+                   JOIN {securevideo_qattempts} qatt ON qatt.instanceid = p.id
+                  WHERE cm.id = :cmid";
+
+        $userlist->add_from_sql('userid', $sqlq, [
             'modname' => 'securevideo',
             'cmid'    => $context->instanceid,
         ]);
@@ -146,6 +180,30 @@ class provider implements
                     $data
                 );
             }
+
+            // Export question attempts.
+            $attempts = $DB->get_records('securevideo_qattempts', [
+                'instanceid' => $cm->instance,
+                'userid'     => $user->id,
+            ]);
+
+            if ($attempts) {
+                $attemptdata = [];
+                foreach ($attempts as $attempt) {
+                    $attemptdata[] = (object)[
+                        'svquestionid' => $attempt->svquestionid,
+                        'passed'       => transform::yesno($attempt->passed),
+                        'attempts'     => $attempt->attempts,
+                        'fraction'     => $attempt->fraction,
+                        'timemodified' => transform::datetime($attempt->timemodified),
+                    ];
+                }
+
+                writer::with_context($context)->export_data(
+                    [get_string('pluginname', 'mod_securevideo'), 'question_attempts'],
+                    (object)['attempts' => $attemptdata]
+                );
+            }
         }
     }
 
@@ -165,6 +223,19 @@ class provider implements
         $cm = get_coursemodule_from_id('securevideo', $context->instanceid);
         if ($cm) {
             $DB->delete_records('securevideo_progress', ['instanceid' => $cm->instance]);
+
+            $qubaids = $DB->get_fieldset_select(
+                'securevideo_qattempts',
+                'qubaid',
+                'instanceid = :instanceid AND qubaid > 0',
+                ['instanceid' => $cm->instance]
+            );
+
+            if (!empty($qubaids)) {
+                question_engine::delete_questions_usage_by_activities(new qubaid_list($qubaids));
+            }
+
+            $DB->delete_records('securevideo_qattempts', ['instanceid' => $cm->instance]);
         }
     }
 
@@ -187,6 +258,22 @@ class provider implements
             $cm = get_coursemodule_from_id('securevideo', $context->instanceid);
             if ($cm) {
                 $DB->delete_records('securevideo_progress', [
+                    'instanceid' => $cm->instance,
+                    'userid'     => $user->id,
+                ]);
+
+                $qubaids = $DB->get_fieldset_select(
+                    'securevideo_qattempts',
+                    'qubaid',
+                    'instanceid = :instanceid AND userid = :userid AND qubaid > 0',
+                    ['instanceid' => $cm->instance, 'userid' => $user->id]
+                );
+
+                if (!empty($qubaids)) {
+                    question_engine::delete_questions_usage_by_activities(new qubaid_list($qubaids));
+                }
+
+                $DB->delete_records('securevideo_qattempts', [
                     'instanceid' => $cm->instance,
                     'userid'     => $user->id,
                 ]);
@@ -223,6 +310,23 @@ class provider implements
 
         $DB->delete_records_select(
             'securevideo_progress',
+            "instanceid = :instanceid AND userid $insql",
+            $params
+        );
+
+        $qubaids = $DB->get_fieldset_select(
+            'securevideo_qattempts',
+            'qubaid',
+            "instanceid = :instanceid AND userid $insql AND qubaid > 0",
+            $params
+        );
+
+        if (!empty($qubaids)) {
+            question_engine::delete_questions_usage_by_activities(new qubaid_list($qubaids));
+        }
+
+        $DB->delete_records_select(
+            'securevideo_qattempts',
             "instanceid = :instanceid AND userid $insql",
             $params
         );

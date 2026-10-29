@@ -187,7 +187,15 @@ class mod_securevideo_mod_form extends moodleform_mod {
         $mform->addHelpButton('completionminpercentgroup', 'completionminpercent', 'mod_securevideo');
         $mform->disabledIf('completionminpercent', 'completionminpercentenabled', 'notchecked');
 
-        return ['completionminpercentgroup'];
+        $mform->addElement(
+            'checkbox',
+            'completionrequirequestions',
+            get_string('completionrequirequestions', 'mod_securevideo'),
+            get_string('completionrequirequestions', 'mod_securevideo')
+        );
+        $mform->addHelpButton('completionrequirequestions', 'completionrequirequestions', 'mod_securevideo');
+
+        return ['completionminpercentgroup', 'completionrequirequestions'];
     }
 
     /**
@@ -197,7 +205,8 @@ class mod_securevideo_mod_form extends moodleform_mod {
      * @return bool
      */
     public function completion_rule_enabled($data): bool {
-        return !empty($data['completionminpercentenabled']) && !empty($data['completionminpercent']);
+        return (!empty($data['completionminpercentenabled']) && !empty($data['completionminpercent']))
+            || !empty($data['completionrequirequestions']);
     }
 
     /**
@@ -211,6 +220,10 @@ class mod_securevideo_mod_form extends moodleform_mod {
 
         if (!empty($defaultvalues['completionminpercent'])) {
             $defaultvalues['completionminpercentenabled'] = 1;
+        }
+
+        if (!empty($defaultvalues['completionrequirequestions'])) {
+            $defaultvalues['completionrequirequestions'] = 1;
         }
     }
 

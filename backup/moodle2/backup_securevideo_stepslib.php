@@ -43,14 +43,32 @@ class backup_securevideo_activity_structure_step extends backup_activity_structu
             'watermarkopacity',
             'preventseeking',
             'completionminpercent',
+            'completionrequirequestions',
             'timecreated',
             'timemodified',
         ]);
 
+        $questions = new backup_nested_element('questions');
+        $question = new backup_nested_element('question', ['id'], [
+            'questionbankentryid',
+            'questionid',
+            'timecode',
+            'title',
+            'requirecorrect',
+            'rewindonfail',
+            'timecreated',
+            'timemodified',
+        ]);
+
+        $securevideo->add_child($questions);
+        $questions->add_child($question);
+
         // Sources.
         $securevideo->set_source_table('securevideo', ['id' => backup::VAR_ACTIVITYID]);
+        $question->set_source_table('securevideo_questions', ['instanceid' => backup::VAR_PARENTID]);
 
         // Annotations.
+        $question->annotate_ids('question', 'questionid');
         $securevideo->annotate_files('mod_securevideo', 'intro', null);
 
         return $this->prepare_activity_structure($securevideo);

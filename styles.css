@@ -87,3 +87,110 @@
     transform: translateY(-2px);
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
 }
+
+/* Timeline Question Cue Markers */
+.securevideo-cue-marker {
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+}
+
+.securevideo-cue-marker:hover {
+    transform: translate(-50%, -50%) scale(1.4) !important;
+    z-index: 10 !important;
+}
+
+/* In-Video Question Overlay & Modal */
+.securevideo-question-overlay {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    animation: securevideoFadeIn 0.2s ease-out;
+}
+
+@keyframes securevideoFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.securevideo-question-card {
+    animation: securevideoScaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.4) !important;
+}
+
+@keyframes securevideoScaleUp {
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Question Engine styling adjustments inside overlay */
+.securevideo-q-body .que {
+    margin-bottom: 0 !important;
+}
+
+.securevideo-q-body .que .info {
+    display: none !important; /* Hide question number and grade header to keep overlay clean */
+}
+
+.securevideo-q-body .que .content {
+    margin-left: 0 !important;
+}
+
+.securevideo-q-body .formulation {
+    background-color: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+.securevideo-q-body .qtext {
+    font-size: 1.05rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    color: #212529;
+}
+
+.securevideo-q-body .answer div.r0,
+.securevideo-q-body .answer div.r1 {
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.4rem;
+    border-radius: 6px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    transition: background-color 0.15s ease;
+}
+
+.securevideo-q-body .answer div.r0:hover,
+.securevideo-q-body .answer div.r1:hover {
+    background-color: #eef2f6;
+}
+
+.securevideo-q-body .answer input[type="radio"],
+.securevideo-q-body .answer input[type="checkbox"] {
+    margin-right: 0.5rem;
+    cursor: pointer;
+}
+
+.securevideo-q-body .answer label {
+    cursor: pointer;
+    margin-bottom: 0;
+}
+
+/* Graded feedback styles */
+.securevideo-q-feedback .correctness {
+    font-weight: 600;
+}
+
+.securevideo-q-feedback .outcome {
+    margin-top: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+}

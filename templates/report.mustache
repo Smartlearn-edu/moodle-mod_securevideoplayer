@@ -116,6 +116,9 @@
                             <th scope="col" style="min-width: 180px;">{{#str}}percentcompleted, mod_securevideo{{/str}}</th>
                             <th scope="col" class="text-center">{{#str}}watchedtime, mod_securevideo{{/str}}</th>
                             <th scope="col" class="text-center">{{#str}}lastposition, mod_securevideo{{/str}}</th>
+                            {{#hasactivityquestions}}
+                            <th scope="col" class="text-center">{{#str}}interactivequestionscol, mod_securevideo{{/str}}</th>
+                            {{/hasactivityquestions}}
                             <th scope="col" class="text-center">{{#str}}status, mod_securevideo{{/str}}</th>
                             <th scope="col" class="text-end pe-4">{{#str}}lastupdated, mod_securevideo{{/str}}</th>
                         </tr>
@@ -149,6 +152,11 @@
                             <td class="text-center">
                                 <span class="badge bg-light text-dark border font-monospace">{{lastposformatted}}</span>
                             </td>
+                            {{#hasactivityquestions}}
+                            <td class="text-center">
+                                <span class="{{qstatusclass}} px-2 py-1">{{questionssummary}}</span>
+                            </td>
+                            {{/hasactivityquestions}}
                             <td class="text-center">
                                 <span class="{{statusclass}} px-2 py-1">{{statustext}}</span>
                             </td>

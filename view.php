@@ -112,6 +112,33 @@ if (!$media || $media->status !== 'ready') {
 
     $percentcompleted = $progress ? (int)$progress->percentcompleted : 0;
 
+    // Fetch configured interactive questions.
+    $questions = $DB->get_records('securevideo_questions', ['instanceid' => $securevideo->id], 'timecode ASC');
+    $questionsdata = [];
+    foreach ($questions as $q) {
+        $passed = $DB->record_exists('securevideo_qattempts', [
+            'svquestionid' => $q->id,
+            'userid'       => $USER->id,
+            'passed'       => 1,
+        ]);
+
+        $qm = floor($q->timecode / 60);
+        $qs = $q->timecode % 60;
+        $timeformatted = sprintf('%02d:%02d', $qm, $qs);
+        $percent = ($media->duration > 0) ? min(100, round(($q->timecode / $media->duration) * 100, 2)) : 0;
+
+        $questionsdata[] = [
+            'id'             => (int)$q->id,
+            'timecode'       => (int)$q->timecode,
+            'timeformatted'  => $timeformatted,
+            'percent'        => $percent,
+            'title'          => !empty($q->title) ? format_string($q->title) : get_string('knowledgecheck', 'mod_securevideo'),
+            'requirecorrect' => (int)$q->requirecorrect,
+            'rewindonfail'   => (int)$q->rewindonfail,
+            'passed'         => $passed,
+        ];
+    }
+
     $playerdata = [
         'cmid'                 => (int)$cm->id,
         'title'                => $securevideo->name,
@@ -135,6 +162,9 @@ if (!$media || $media->status !== 'ready') {
         'studentid'            => (int)$USER->id,
         'studentip'            => getremoteaddr(),
         'livetime'             => userdate(time(), get_string('strftimedatetimeshort', 'langconfig')),
+        'questions'            => $questionsdata,
+        'hasquestions'         => !empty($questionsdata),
+        'questionsjson'        => s(json_encode($questionsdata)),
     ];
 
     echo $OUTPUT->render_from_template('mod_securevideo/player', $playerdata);

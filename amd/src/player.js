@@ -14,7 +14,7 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Hardened HLS player engine, dynamic moving watermark, anti-seek, and watch tracker.
+ * Hardened HLS player engine, dynamic moving watermark, anti-seek, watch tracker, and in-video interactive questions.
  *
  * @module     mod_securevideo/player
  * @copyright  2025 Mohammad Nabil <mohammad@smartlearn.education>
@@ -156,8 +156,16 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             this.watchedIntervals = [];
         }
 
+        try {
+            this.questions = JSON.parse(container.dataset.questions || '[]');
+        } catch (e) {
+            this.questions = [];
+        }
+
         this.video = container.querySelector('#secureVideoElement');
         this.canvas = container.querySelector('#secureVideoWatermarkCanvas');
+        this.questionOverlay = container.querySelector('#secureVideoQuestionOverlay');
+        this.activeQuestion = null;
         this.hls = null;
         this.beaconInterval = null;
         this.watermarkInterval = null;
@@ -175,6 +183,7 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             this.setupWatermark();
             this.setupAntiTamper();
             this.setupProgressBeacon();
+            this.setupQuestions();
             this.loadStream();
         },
 
@@ -247,6 +256,9 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
 
             // Play / Pause toggle function.
             const togglePlay = function() {
+                if (self.activeQuestion) {
+                    return; // Prevent play while question overlay is active.
+                }
                 if (video.paused || video.ended) {
                     video.play().catch(function(err) {
                         console.warn('[SecureVideo] Autoplay blocked:', err);
@@ -264,12 +276,13 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             }
             if (centerOverlay) {
                 centerOverlay.addEventListener('click', function(e) {
-                    if (e.target === centerOverlay || e.target.closest('.securevideo-btn-bigplay')) {
+                    if (e.target === centerOverlay) {
                         togglePlay();
                     }
                 });
             }
 
+            // Sync play state UI.
             video.addEventListener('play', function() {
                 container.classList.add('is-playing');
                 container.classList.remove('is-paused');
@@ -284,16 +297,6 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
                 if (playBtn) {
                     playBtn.innerHTML = '<i class="fa fa-play" aria-hidden="true"></i>';
                 }
-                self.sendProgressBeacon();
-            });
-
-            video.addEventListener('ended', function() {
-                container.classList.remove('is-playing');
-                container.classList.add('is-paused');
-                if (playBtn) {
-                    playBtn.innerHTML = '<i class="fa fa-repeat" aria-hidden="true"></i>';
-                }
-                self.sendProgressBeacon();
             });
 
             // Volume & Mute.
@@ -316,9 +319,20 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
 
             // Timeline scrubbing.
             const handleTimelineSeek = function(e) {
+                if (self.activeQuestion) {
+                    return;
+                }
                 const rect = timelineWrapper.getBoundingClientRect();
                 const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
                 const targetTime = (clickX / rect.width) * (video.duration || self.duration);
+
+                // Check gate: First unpassed required question.
+                const unpassedQ = self.findFirstUnpassedQuestion(targetTime);
+                if (unpassedQ && targetTime > (unpassedQ.timecode + 1)) {
+                    video.currentTime = unpassedQ.timecode;
+                    self.triggerQuestion(unpassedQ);
+                    return;
+                }
 
                 // Anti-seek check.
                 if (self.preventSeeking && targetTime > (self.maxPosition + 2)) {
@@ -343,6 +357,9 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             video.addEventListener('timeupdate', function() {
                 const cur = video.currentTime;
                 const dur = video.duration || self.duration;
+
+                // Check interactive question cuepoints.
+                self.checkQuestionCuepoints(cur);
 
                 // Anti-seek enforcement.
                 if (self.preventSeeking) {
@@ -378,34 +395,37 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
                     }
                 }
 
+                // Update buffered progress.
+                if (video.buffered.length > 0 && dur > 0) {
+                    const bufferedEnd = video.buffered.end(video.buffered.length - 1);
+                    if (bufferedBar) {
+                        bufferedBar.style.width = ((bufferedEnd / dur) * 100) + '%';
+                    }
+                }
+
+                // Update time counter.
                 if (currentTimeEl) {
                     currentTimeEl.textContent = formatTime(cur);
                 }
-
-                // Update buffered range.
-                if (video.buffered.length > 0 && dur > 0 && bufferedBar) {
-                    const bufferedEnd = video.buffered.end(video.buffered.length - 1);
-                    bufferedBar.style.width = ((bufferedEnd / dur) * 100) + '%';
-                }
             });
 
-            // Playback speed menu.
+            // Playback speed selection.
             speedItems.forEach(function(item) {
                 item.addEventListener('click', function() {
                     const speed = parseFloat(item.dataset.speed);
                     video.playbackRate = speed;
-                    speedItems.forEach(function(i) {
-                        i.classList.remove('active');
+                    speedItems.forEach(function(b) {
+                        b.classList.remove('active');
                     });
                     item.classList.add('active');
                     const label = container.querySelector('.securevideo-current-speed');
                     if (label) {
-                        label.textContent = speed + 'x';
+                        label.textContent = item.textContent;
                     }
                 });
             });
 
-            // Fullscreen wrapper toggle.
+            // Fullscreen toggle.
             if (fullscreenBtn) {
                 fullscreenBtn.addEventListener('click', function() {
                     if (!document.fullscreenElement && !document.webkitFullscreenElement) {
@@ -445,8 +465,8 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
                 }
             }
 
-            // Idle detection for hiding controls when playing.
-            let idleTimeout = null;
+            // Auto-hide controls when idle.
+            let idleTimeout;
             const resetIdle = function() {
                 container.classList.remove('is-idle');
                 clearTimeout(idleTimeout);
@@ -519,136 +539,357 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
         },
 
         /**
-         * Setup dynamic moving canvas watermark.
+         * Setup dynamic canvas moving watermark.
          */
         setupWatermark: function() {
             if (!this.watermarkEnabled || !this.canvas) {
                 return;
             }
 
-            const self = this;
             const canvas = this.canvas;
             const ctx = canvas.getContext('2d');
-
-            let currentX = 0.2;
-            let currentY = 0.2;
-            let targetX = 0.2;
-            let targetY = 0.2;
+            const self = this;
 
             const resizeCanvas = function() {
-                canvas.width = canvas.clientWidth || 800;
-                canvas.height = canvas.clientHeight || 450;
+                canvas.width = canvas.parentElement.clientWidth || 1280;
+                canvas.height = canvas.parentElement.clientHeight || 720;
             };
 
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
 
-            // Watermark text.
-            const textLine1 = this.studentName + ' (ID: ' + this.studentId + ')';
-            const textLine2 = 'IP: ' + this.studentIp + ' • ' + this.liveTime;
+            // Watermark position state.
+            let x = Math.random() * (canvas.width - 200);
+            let y = Math.random() * (canvas.height - 100);
+            let dx = (Math.random() > 0.5 ? 1 : -1) * (0.7 + Math.random() * 0.5);
+            let dy = (Math.random() > 0.5 ? 1 : -1) * (0.7 + Math.random() * 0.5);
 
-            // Pick a new quadrant every 6 seconds.
-            const pickNewQuadrant = function() {
-                targetX = 0.1 + Math.random() * 0.6;
-                targetY = 0.1 + Math.random() * 0.65;
-            };
-
-            pickNewQuadrant();
-            this.watermarkInterval = setInterval(pickNewQuadrant, 6000);
-
-            // Smooth 60fps render loop.
-            const render = function() {
-                if (!canvas.isConnected) {
-                    return;
-                }
-
-                currentX += (targetX - currentX) * 0.05;
-                currentY += (targetY - currentY) * 0.05;
-
+            const drawWatermark = function() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
                 ctx.save();
                 ctx.globalAlpha = self.watermarkOpacity;
-                ctx.font = '13px system-ui, -apple-system, sans-serif';
-
-                const padX = 14;
-                const padY = 8;
-                const width1 = ctx.measureText(textLine1).width;
-                const width2 = ctx.measureText(textLine2).width;
-                const boxW = Math.max(width1, width2) + (padX * 2);
-                const boxH = 46;
-
-                const posX = currentX * (canvas.width - boxW);
-                const posY = currentY * (canvas.height - boxH);
-
-                // Draw background pill.
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
-                ctx.beginPath();
-                ctx.roundRect(posX, posY, boxW, boxH, 8);
-                ctx.fill();
-
-                // Draw text.
                 ctx.fillStyle = '#ffffff';
-                ctx.fillText(textLine1, posX + padX, posY + 20);
-                ctx.fillStyle = '#e2e8f0';
-                ctx.fillText(textLine2, posX + padX, posY + 38);
+                ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                ctx.shadowBlur = 4;
+                ctx.font = 'bold 14px sans-serif';
+
+                // Move coordinates.
+                x += dx;
+                y += dy;
+
+                const textWidth = 220;
+                const textHeight = 60;
+
+                if (x <= 10 || x + textWidth >= canvas.width - 10) {
+                    dx = -dx;
+                }
+                if (y <= 30 || y + textHeight >= canvas.height - 10) {
+                    dy = -dy;
+                }
+
+                ctx.fillText(self.studentName, x, y);
+                ctx.font = '12px sans-serif';
+                ctx.fillText('ID: ' + self.studentId + ' | IP: ' + self.studentIp, x, y + 18);
+                ctx.fillText(self.liveTime, x, y + 34);
 
                 ctx.restore();
-
-                requestAnimationFrame(render);
             };
 
-            requestAnimationFrame(render);
+            this.watermarkInterval = setInterval(drawWatermark, 1000 / 30);
         },
 
         /**
-         * Setup MutationObserver and integrity timer against DevTools tampering.
+         * Setup anti-tamper DOM observers on watermark canvas.
          */
         setupAntiTamper: function() {
-            if (!this.watermarkEnabled || !this.canvas) {
+            const self = this;
+            const canvas = this.canvas;
+            const video = this.video;
+
+            if (!this.watermarkEnabled || !canvas) {
                 return;
             }
 
-            const self = this;
-            const video = this.video;
-            const container = this.container;
-
-            const checkCanvasIntegrity = function() {
-                const canvas = self.canvas;
-                if (!canvas || !canvas.isConnected) {
-                    console.warn('[SecureVideo] Watermark removed from DOM. Pausing playback.');
-                    video.pause();
-                    self.restoreWatermarkCanvas();
-                    return;
-                }
-
-                const style = window.getComputedStyle(canvas);
-                if (
-                    style.display === 'none' ||
-                    style.visibility === 'hidden' ||
-                    parseFloat(style.opacity) < 0.05 ||
-                    canvas.offsetWidth === 0 ||
-                    canvas.offsetHeight === 0
-                ) {
-                    console.warn('[SecureVideo] Watermark style tampered. Pausing playback.');
-                    video.pause();
-                    canvas.style.display = 'block';
-                    canvas.style.visibility = 'visible';
-                    canvas.style.opacity = '1';
-                }
-            };
-
-            const observer = new MutationObserver(function() {
-                checkCanvasIntegrity();
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes') {
+                        const style = window.getComputedStyle(canvas);
+                        if (style.display === 'none' ||
+                            style.visibility === 'hidden' ||
+                            parseFloat(style.opacity) < (self.watermarkOpacity * 0.5)) {
+                            video.pause();
+                            Notification.alert('Security Alert', 'Watermark modification detected. Video paused.', 'OK');
+                        }
+                    } else if (mutation.type === 'childList') {
+                        mutation.removedNodes.forEach(function(node) {
+                            if (node === canvas) {
+                                video.pause();
+                                self.restoreWatermarkCanvas();
+                            }
+                        });
+                    }
+                });
             });
 
-            observer.observe(container, {
+            observer.observe(canvas.parentElement, {
                 childList: true,
                 attributes: true,
                 subtree: true
             });
+        },
 
-            setInterval(checkCanvasIntegrity, 1500);
+        /**
+         * Setup in-video interactive question overlay handlers.
+         */
+        setupQuestions: function() {
+            const self = this;
+            if (!this.questionOverlay || !this.questions || this.questions.length === 0) {
+                return;
+            }
+
+            const submitBtn = this.questionOverlay.querySelector('.securevideo-btn-submit');
+            const continueBtn = this.questionOverlay.querySelector('.securevideo-btn-continue');
+            const retryBtn = this.questionOverlay.querySelector('.securevideo-btn-retry');
+
+            if (submitBtn) {
+                submitBtn.addEventListener('click', function() {
+                    self.submitQuestionAnswer();
+                });
+            }
+
+            if (continueBtn) {
+                continueBtn.addEventListener('click', function() {
+                    self.continuePlayback();
+                });
+            }
+
+            if (retryBtn) {
+                retryBtn.addEventListener('click', function() {
+                    if (self.activeQuestion) {
+                        self.triggerQuestion(self.activeQuestion, true);
+                    }
+                });
+            }
+        },
+
+        /**
+         * Find the first unpassed question before or at target timestamp.
+         *
+         * @param {number} targetTime
+         * @return {Object|null}
+         */
+        findFirstUnpassedQuestion: function(targetTime) {
+            for (let i = 0; i < this.questions.length; i++) {
+                const q = this.questions[i];
+                if (q.requirecorrect && !q.passed && targetTime > (q.timecode + 1)) {
+                    return q;
+                }
+            }
+            return null;
+        },
+
+        /**
+         * Check playback position against question cuepoints.
+         *
+         * @param {number} currentTime
+         */
+        checkQuestionCuepoints: function(currentTime) {
+            if (this.activeQuestion) {
+                return;
+            }
+
+            for (let i = 0; i < this.questions.length; i++) {
+                const q = this.questions[i];
+                if (!q.passed && currentTime >= q.timecode && (currentTime - q.timecode) < 2.5) {
+                    this.video.pause();
+                    this.triggerQuestion(q, false);
+                    break;
+                }
+            }
+        },
+
+        /**
+         * Display in-video question overlay and load question attempt.
+         *
+         * @param {Object} question
+         * @param {boolean} forcenew
+         */
+        triggerQuestion: function(question, forcenew) {
+            const self = this;
+            const overlay = this.questionOverlay;
+            if (!overlay) {
+                return;
+            }
+
+            this.activeQuestion = question;
+            this.video.pause();
+
+            const titleEl = overlay.querySelector('.securevideo-q-title');
+            const timecodeEl = overlay.querySelector('.securevideo-q-timecode');
+            const loadingEl = overlay.querySelector('.securevideo-q-loading');
+            const contentEl = overlay.querySelector('.securevideo-q-content');
+            const feedbackEl = overlay.querySelector('.securevideo-q-feedback');
+            const submitBtn = overlay.querySelector('.securevideo-btn-submit');
+            const continueBtn = overlay.querySelector('.securevideo-btn-continue');
+            const retryBtn = overlay.querySelector('.securevideo-btn-retry');
+
+            if (titleEl) {
+                titleEl.innerHTML = '<i class="fa fa-question-circle me-2" aria-hidden="true"></i>' + question.title;
+            }
+            if (timecodeEl) {
+                timecodeEl.textContent = formatTime(question.timecode);
+            }
+
+            loadingEl.classList.remove('d-none');
+            contentEl.classList.add('d-none');
+            feedbackEl.classList.add('d-none');
+            continueBtn.classList.add('d-none');
+            retryBtn.classList.add('d-none');
+            submitBtn.classList.remove('d-none');
+            submitBtn.disabled = true;
+
+            overlay.classList.remove('d-none');
+
+            Ajax.call([{
+                methodname: 'mod_securevideo_get_question_attempt',
+                args: {
+                    cmid: self.cmid,
+                    svquestionid: question.id,
+                    forcenew: !!forcenew
+                }
+            }])[0].then(function(res) {
+                loadingEl.classList.add('d-none');
+                contentEl.innerHTML = res.html;
+                contentEl.classList.remove('d-none');
+                submitBtn.disabled = false;
+
+                // Render MathJax if available.
+                if (window.MathJax && window.MathJax.typesetPromise) {
+                    window.MathJax.typesetPromise([contentEl]).catch(function() {});
+                }
+            }).catch(function(err) {
+                Notification.exception(err);
+                loadingEl.classList.add('d-none');
+            });
+        },
+
+        /**
+         * Submit student answer to backend Question Engine.
+         */
+        submitQuestionAnswer: function() {
+            const self = this;
+            const overlay = this.questionOverlay;
+            const contentEl = overlay.querySelector('.securevideo-q-content');
+            const feedbackEl = overlay.querySelector('.securevideo-q-feedback');
+            const submitBtn = overlay.querySelector('.securevideo-btn-submit');
+            const continueBtn = overlay.querySelector('.securevideo-btn-continue');
+            const retryBtn = overlay.querySelector('.securevideo-btn-retry');
+            const q = this.activeQuestion;
+
+            if (!q || !contentEl) {
+                return;
+            }
+
+            // Collect form inputs.
+            const formData = {};
+            contentEl.querySelectorAll('input, select, textarea').forEach(function(input) {
+                if (input.disabled) {
+                    return;
+                }
+                if (input.type === 'radio' || input.type === 'checkbox') {
+                    if (input.checked) {
+                        formData[input.name] = input.value;
+                    }
+                } else if (input.name) {
+                    formData[input.name] = input.value;
+                }
+            });
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Submitting...';
+
+            Ajax.call([{
+                methodname: 'mod_securevideo_submit_question_attempt',
+                args: {
+                    cmid: self.cmid,
+                    svquestionid: q.id,
+                    formdata: JSON.stringify(formData)
+                }
+            }])[0].then(function(res) {
+                submitBtn.classList.add('d-none');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa fa-check me-1" aria-hidden="true"></i>Submit Answer';
+
+                feedbackEl.innerHTML = res.feedback_html;
+                feedbackEl.classList.remove('d-none');
+
+                if (window.MathJax && window.MathJax.typesetPromise) {
+                    window.MathJax.typesetPromise([feedbackEl]).catch(function() {});
+                }
+
+                if (res.is_correct) {
+                    q.passed = true;
+                    // Update cue marker color.
+                    const marker = self.container.querySelector('.securevideo-cue-marker[data-cueid="' + q.id + '"]');
+                    if (marker) {
+                        marker.classList.remove('bg-info');
+                        marker.classList.add('bg-success');
+                    }
+
+                    continueBtn.classList.remove('d-none');
+                    continueBtn.focus();
+
+                    // Optional 3-second auto resume.
+                    setTimeout(function() {
+                        if (self.activeQuestion === q) {
+                            self.continuePlayback();
+                        }
+                    }, 3000);
+                } else {
+                    if (res.rewind_seconds > 0) {
+                        feedbackEl.insertAdjacentHTML('afterbegin',
+                            '<div class="alert alert-warning py-2 mb-3">' +
+                            '<i class="fa fa-rotate-left me-2"></i>' +
+                            'Incorrect answer. Rewinding ' + res.rewind_seconds + ' seconds to review...' +
+                            '</div>'
+                        );
+
+                        setTimeout(function() {
+                            overlay.classList.add('d-none');
+                            self.activeQuestion = null;
+                            self.video.currentTime = Math.max(0, q.timecode - res.rewind_seconds);
+                            self.video.play();
+                        }, 2500);
+                    } else {
+                        retryBtn.classList.remove('d-none');
+                        retryBtn.focus();
+                    }
+                }
+            }).catch(function(err) {
+                Notification.exception(err);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa fa-check me-1" aria-hidden="true"></i>Submit Answer';
+            });
+        },
+
+        /**
+         * Close question overlay and continue playback.
+         */
+        continuePlayback: function() {
+            if (this.questionOverlay) {
+                this.questionOverlay.classList.add('d-none');
+            }
+            const q = this.activeQuestion;
+            this.activeQuestion = null;
+
+            if (q && this.video.currentTime <= q.timecode) {
+                this.video.currentTime = q.timecode + 0.5; // Advance slightly past cuepoint.
+            }
+
+            this.video.play().catch(function(err) {
+                console.warn('[SecureVideo] Continue playback failed:', err);
+            });
         },
 
         /**
@@ -666,7 +907,7 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
                 canvas.id = 'secureVideoWatermarkCanvas';
                 canvas.className = 'securevideo-watermark-canvas position-absolute top-0 start-0 w-100 h-100';
                 canvas.style.pointerEvents = 'none';
-                canvas.style.zIndex = '15';
+                canvas.style.zIndex = '50';
                 ratioDiv.appendChild(canvas);
                 this.canvas = canvas;
                 this.setupWatermark();

@@ -52,6 +52,36 @@ class custom_completion extends activity_custom_completion {
             if ($progress && $progress->percentcompleted >= $instance->completionminpercent) {
                 return COMPLETION_COMPLETE;
             }
+        } else if ($rule === 'completionrequirequestions') {
+            if (empty($instance->completionrequirequestions)) {
+                return COMPLETION_COMPLETE;
+            }
+
+            $totalquestions = $DB->count_records('securevideo_questions', [
+                'instanceid'     => $instance->id,
+                'requirecorrect' => 1,
+            ]);
+
+            if ($totalquestions === 0) {
+                return COMPLETION_COMPLETE;
+            }
+
+            $sql = "SELECT COUNT(qa.id)
+                      FROM {securevideo_qattempts} qa
+                      JOIN {securevideo_questions} sq ON sq.id = qa.svquestionid
+                     WHERE qa.instanceid = :instanceid
+                       AND qa.userid = :userid
+                       AND sq.requirecorrect = 1
+                       AND qa.passed = 1";
+
+            $passed = $DB->count_records_sql($sql, [
+                'instanceid' => $instance->id,
+                'userid'     => $this->userid,
+            ]);
+
+            if ($passed >= $totalquestions) {
+                return COMPLETION_COMPLETE;
+            }
         }
 
         return COMPLETION_INCOMPLETE;
@@ -65,6 +95,7 @@ class custom_completion extends activity_custom_completion {
     public static function get_defined_custom_rules(): array {
         return [
             'completionminpercent',
+            'completionrequirequestions',
         ];
     }
 
@@ -77,12 +108,21 @@ class custom_completion extends activity_custom_completion {
         global $DB;
 
         $instance = $DB->get_record('securevideo', ['id' => $this->cm->instance], '*', MUST_EXIST);
+        $totalquestions = $DB->count_records('securevideo_questions', [
+            'instanceid'     => $instance->id,
+            'requirecorrect' => 1,
+        ]);
 
         return [
             'completionminpercent' => get_string(
                 'completionminpercent_desc',
                 'mod_securevideo',
                 $instance->completionminpercent
+            ),
+            'completionrequirequestions' => get_string(
+                'completionrequirequestions_desc',
+                'mod_securevideo',
+                $totalquestions
             ),
         ];
     }
@@ -96,6 +136,7 @@ class custom_completion extends activity_custom_completion {
         return [
             'completionview',
             'completionminpercent',
+            'completionrequirequestions',
         ];
     }
 }
