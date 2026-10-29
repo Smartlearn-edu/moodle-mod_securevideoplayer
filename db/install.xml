@@ -67,7 +67,6 @@
         <KEY NAME="instanceid_fk" TYPE="foreign" FIELDS="instanceid" REFTABLE="securevideo" REFFIELDS="id"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="instanceid_idx" UNIQUE="false" FIELDS="instanceid"/>
         <INDEX NAME="instanceid_timecode_idx" UNIQUE="false" FIELDS="instanceid, timecode"/>
       </INDEXES>
     </TABLE>

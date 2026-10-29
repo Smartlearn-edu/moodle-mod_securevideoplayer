@@ -69,7 +69,6 @@ function xmldb_securevideo_upgrade(int $oldversion): bool {
         $tablequestions->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
         $tablequestions->add_key('instanceid_fk', XMLDB_KEY_FOREIGN, ['instanceid'], 'securevideo', ['id']);
 
-        $tablequestions->add_index('instanceid_idx', XMLDB_INDEX_NOTUNIQUE, ['instanceid']);
         $tablequestions->add_index('instanceid_timecode_idx', XMLDB_INDEX_NOTUNIQUE, ['instanceid', 'timecode']);
 
         if (!$dbman->table_exists($tablequestions)) {
